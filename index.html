@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI CV Maker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-7xl mx-auto p-4">
+    <header class="flex justify-between items-center mb-6 no-print">
+      <h1 class="text-2xl font-bold">AI CV Maker</h1>
+      <div class="flex gap-2">
+        <button id="exportBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Export PDF</button>
+        <button id="saveBtn" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">Save</button>
+        <button id="clearBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Clear</button>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Editor Panel -->
+      <div class="bg-white rounded-xl shadow p-4 no-print overflow-y-auto max-h-[90vh]">
+        <!-- AI Settings -->
+        <details class="mb-4 border rounded-lg p-3 bg-gray-50">
+          <summary class="cursor-pointer font-semibold text-gray-700">AI Settings (Ollama)</summary>
+          <div class="mt-2 grid grid-cols-2 gap-2">
+            <input id="ollamaUrl" value="http://localhost:11434" class="border rounded p-2 text-sm" placeholder="Ollama URL" />
+            <input id="ollamaModel" value="llama3.2" class="border rounded p-2 text-sm" placeholder="Model name" />
+          </div>
+        </details>
+
+        <!-- Personal Info -->
+        <section class="mb-4">
+          <h2 class="font-semibold text-lg mb-2">Personal Info</h2>
+          <div class="grid grid-cols-2 gap-2">
+            <input id="name" placeholder="Full Name" class="border rounded p-2" />
+            <input id="title" placeholder="Job Title" class="border rounded p-2" />
+            <input id="email" placeholder="Email" class="border rounded p-2" />
+            <input id="phone" placeholder="Phone" class="border rounded p-2" />
+            <input id="location" placeholder="Location" class="border rounded p-2" />
+            <input id="website" placeholder="Website" class="border rounded p-2" />
+            <input id="linkedin" placeholder="LinkedIn" class="border rounded p-2" />
+            <input id="github" placeholder="GitHub" class="border rounded p-2" />
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-semibold text-lg">Summary</h2>
+            <button id="aiSummaryBtn" class="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">AI Generate</button>
+          </div>
+          <textarea id="summary" rows="3" class="w-full border rounded p-2" placeholder="Professional summary..."></textarea>
+        </section>
+
+        <!-- Experience -->
+        <section class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-semibold text-lg">Experience</h2>
+            <button id="addExperienceBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Add</button>
+          </div>
+          <div id="experienceList"></div>
+        </section>
+
+        <!-- Education -->
+        <section class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-semibold text-lg">Education</h2>
+            <button id="addEducationBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Add</button>
+          </div>
+          <div id="educationList"></div>
+        </section>
+
+        <!-- Projects -->
+        <section class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-semibold text-lg">Projects</h2>
+            <button id="addProjectBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Add</button>
+          </div>
+          <div id="projectList"></div>
+        </section>
+
+        <!-- Skills -->
+        <section class="mb-4">
+          <h2 class="font-semibold text-lg mb-2">Skills</h2>
+          <textarea id="skills" rows="2" class="w-full border rounded p-2" placeholder="JavaScript, React, Node.js..."></textarea>
+        </section>
+
+        <!-- AI Tailor -->
+        <section class="mb-4 border-t pt-4">
+          <h2 class="font-semibold text-lg mb-2">AI Tailor to Job</h2>
+          <textarea id="jobDescription" rows="4" class="w-full border rounded p-2 mb-2" placeholder="Paste job description here..."></textarea>
+          <button id="aiTailorBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Tailor Resume</button>
+          <div id="aiOutput" class="mt-2 text-sm text-gray-600 whitespace-pre-wrap"></div>
+        </section>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="preview-container bg-white rounded-xl shadow p-8 print-area" id="preview"></div>
+    </div>
+  </div>
+
+  <!-- AI Draft Review Modal -->
+  <div id="aiModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold">Review AI Draft</h3>
+        <button id="aiModalClose" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+      </div>
+      <p class="text-sm text-gray-500 mb-3">Edit as needed, then click <strong>Apply</strong> to save it into your resume.</p>
+      <textarea id="aiDraft" rows="12"
+                class="w-full border rounded p-3 text-sm font-mono leading-relaxed"></textarea>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="aiModalCancel"
+                class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Cancel</button>
+        <button id="aiModalApply"
+                class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
