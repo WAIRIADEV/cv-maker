@@ -5,118 +5,229 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI CV Maker</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-gray-100 text-gray-800">
-  <div class="max-w-7xl mx-auto p-4">
-    <header class="flex justify-between items-center mb-6 no-print">
-      <h1 class="text-2xl font-bold">AI CV Maker</h1>
-      <div class="flex gap-2">
-        <button id="exportBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Export PDF</button>
-        <button id="saveBtn" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">Save</button>
-        <button id="clearBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Clear</button>
-      </div>
-    </header>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Editor Panel -->
-      <div class="bg-white rounded-xl shadow p-4 no-print overflow-y-auto max-h-[90vh]">
-        <!-- AI Settings -->
-        <details class="mb-4 border rounded-lg p-3 bg-gray-50">
-          <summary class="cursor-pointer font-semibold text-gray-700">AI Settings (Ollama)</summary>
-          <div class="mt-2 grid grid-cols-2 gap-2">
-            <input id="ollamaUrl" value="http://localhost:11434" class="border rounded p-2 text-sm" placeholder="Ollama URL" />
-            <input id="ollamaModel" value="llama3.2" class="border rounded p-2 text-sm" placeholder="Model name" />
-          </div>
-        </details>
-
-        <!-- Personal Info -->
-        <section class="mb-4">
-          <h2 class="font-semibold text-lg mb-2">Personal Info</h2>
-          <div class="grid grid-cols-2 gap-2">
-            <input id="name" placeholder="Full Name" class="border rounded p-2" />
-            <input id="title" placeholder="Job Title" class="border rounded p-2" />
-            <input id="email" placeholder="Email" class="border rounded p-2" />
-            <input id="phone" placeholder="Phone" class="border rounded p-2" />
-            <input id="location" placeholder="Location" class="border rounded p-2" />
-            <input id="website" placeholder="Website" class="border rounded p-2" />
-            <input id="linkedin" placeholder="LinkedIn" class="border rounded p-2" />
-            <input id="github" placeholder="GitHub" class="border rounded p-2" />
-          </div>
-        </section>
-
-        <!-- Summary -->
-        <section class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="font-semibold text-lg">Summary</h2>
-            <button id="aiSummaryBtn" class="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">AI Generate</button>
-          </div>
-          <textarea id="summary" rows="3" class="w-full border rounded p-2" placeholder="Professional summary..."></textarea>
-        </section>
-
-        <!-- Experience -->
-        <section class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="font-semibold text-lg">Experience</h2>
-            <button id="addExperienceBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Add</button>
-          </div>
-          <div id="experienceList"></div>
-        </section>
-
-        <!-- Education -->
-        <section class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="font-semibold text-lg">Education</h2>
-            <button id="addEducationBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Add</button>
-          </div>
-          <div id="educationList"></div>
-        </section>
-
-        <!-- Projects -->
-        <section class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="font-semibold text-lg">Projects</h2>
-            <button id="addProjectBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Add</button>
-          </div>
-          <div id="projectList"></div>
-        </section>
-
-        <!-- Skills -->
-        <section class="mb-4">
-          <h2 class="font-semibold text-lg mb-2">Skills</h2>
-          <textarea id="skills" rows="2" class="w-full border rounded p-2" placeholder="JavaScript, React, Node.js..."></textarea>
-        </section>
-
-        <!-- AI Tailor -->
-        <section class="mb-4 border-t pt-4">
-          <h2 class="font-semibold text-lg mb-2">AI Tailor to Job</h2>
-          <textarea id="jobDescription" rows="4" class="w-full border rounded p-2 mb-2" placeholder="Paste job description here..."></textarea>
-          <button id="aiTailorBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Tailor Resume</button>
-          <div id="aiOutput" class="mt-2 text-sm text-gray-600 whitespace-pre-wrap"></div>
-        </section>
+<body>
+  <!-- ============ HEADER ============ -->
+  <header class="app-header no-print">
+    <div class="app-header-inner">
+      <div class="brand">
+        <div class="brand-mark">CV</div>
+        <span class="brand-name">AI CV Maker</span>
       </div>
 
-      <!-- Preview Panel -->
-      <div class="preview-container bg-white rounded-xl shadow p-8 print-area" id="preview"></div>
+      <div class="header-actions">
+        <button id="settingsBtn" class="icon-btn" title="AI Settings" aria-label="AI Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+
+        <button id="previewToggle" class="icon-btn preview-toggle" title="Toggle preview" aria-label="Toggle preview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+
+        <button id="saveBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save</span>
+        </button>
+
+        <button id="clearBtn" class="btn btn-danger-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          <span>Clear</span>
+        </button>
+
+        <button id="exportBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export PDF</span>
+        </button>
+      </div>
     </div>
-  </div>
 
-  <!-- AI Draft Review Modal -->
-  <div id="aiModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6">
-      <div class="flex justify-between items-center mb-3">
-        <h3 class="text-lg font-semibold">Review AI Draft</h3>
-        <button id="aiModalClose" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+    <!-- Settings popover -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-panel-header">
+        <h3>Ollama Settings</h3>
+        <button id="settingsClose" class="icon-btn-sm" aria-label="Close">×</button>
       </div>
-      <p class="text-sm text-gray-500 mb-3">Edit as needed, then click <strong>Apply</strong> to save it into your resume.</p>
-      <textarea id="aiDraft" rows="12"
-                class="w-full border rounded p-3 text-sm font-mono leading-relaxed"></textarea>
-      <div class="flex justify-end gap-2 mt-4">
-        <button id="aiModalCancel"
-                class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Cancel</button>
-        <button id="aiModalApply"
-                class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Apply</button>
+      <label class="settings-field">
+        <span>Ollama URL</span>
+        <input id="ollamaUrl" type="text" value="http://localhost:11434" placeholder="http://localhost:11434" />
+      </label>
+      <label class="settings-field">
+        <span>Model name</span>
+        <input id="ollamaModel" type="text" value="llama3.2" placeholder="llama3.2" />
+      </label>
+      <p class="settings-hint">These are saved locally in your browser.</p>
+    </div>
+  </header>
+
+  <!-- ============ STEPPER ============ -->
+  <nav class="stepper no-print" aria-label="Progress">
+    <ol>
+      <li data-step="1"><span class="step-num">1</span><span class="step-label">Personal</span></li>
+      <li data-step="2"><span class="step-num">2</span><span class="step-label">Summary</span></li>
+      <li data-step="3"><span class="step-num">3</span><span class="step-label">Experience</span></li>
+      <li data-step="4"><span class="step-num">4</span><span class="step-label">Education</span></li>
+      <li data-step="5"><span class="step-num">5</span><span class="step-label">Projects</span></li>
+      <li data-step="6"><span class="step-num">6</span><span class="step-label">Skills</span></li>
+      <li data-step="7"><span class="step-num">7</span><span class="step-label">Export</span></li>
+    </ol>
+    <div class="mobile-progress" aria-hidden="true">Step 1 of 7</div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main class="app-main">
+    <!-- Editor -->
+    <section class="editor no-print">
+      <!-- Page 1: Personal -->
+      <div class="page active" data-page="1">
+        <header class="page-header">
+          <h2>Personal Info</h2>
+          <p>The basics recruiters look for first.</p>
+        </header>
+        <div class="form-grid">
+          <label class="field"><span>Full Name</span><input id="name" placeholder="Jane Doe" /></label>
+          <label class="field"><span>Job Title</span><input id="title" placeholder="Product Designer" /></label>
+          <label class="field"><span>Email</span><input id="email" type="email" placeholder="jane@example.com" /></label>
+          <label class="field"><span>Phone</span><input id="phone" placeholder="+1 555 123 4567" /></label>
+          <label class="field"><span>Location</span><input id="location" placeholder="Berlin, Germany" /></label>
+          <label class="field"><span>Website</span><input id="website" placeholder="janedoe.com" /></label>
+          <label class="field"><span>LinkedIn</span><input id="linkedin" placeholder="linkedin.com/in/janedoe" /></label>
+          <label class="field"><span>GitHub</span><input id="github" placeholder="github.com/janedoe" /></label>
+        </div>
+      </div>
+
+      <!-- Page 2: Summary -->
+      <div class="page" data-page="2">
+        <header class="page-header">
+          <h2>Professional Summary</h2>
+          <p>2–4 sentences that sell your experience. Let AI draft it from your background.</p>
+        </header>
+        <div class="field-header">
+          <span>Summary</span>
+          <button id="aiSummaryBtn" class="btn btn-ai btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            AI Generate
+          </button>
+        </div>
+        <textarea id="summary" rows="6" class="textarea" placeholder="Experienced product designer with 6+ years..."></textarea>
+      </div>
+
+      <!-- Page 3: Experience -->
+      <div class="page" data-page="3">
+        <header class="page-header">
+          <h2>Experience</h2>
+          <p>Add your roles, newest first. One bullet per line.</p>
+        </header>
+        <div id="experienceList" class="list-container"></div>
+        <button id="addExperienceBtn" class="btn btn-outline btn-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Experience
+        </button>
+      </div>
+
+      <!-- Page 4: Education -->
+      <div class="page" data-page="4">
+        <header class="page-header">
+          <h2>Education</h2>
+          <p>Degrees, certifications, or relevant coursework.</p>
+        </header>
+        <div id="educationList" class="list-container"></div>
+        <button id="addEducationBtn" class="btn btn-outline btn-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Education
+        </button>
+      </div>
+
+      <!-- Page 5: Projects -->
+      <div class="page" data-page="5">
+        <header class="page-header">
+          <h2>Projects</h2>
+          <p>Side projects, open-source, or portfolio pieces worth highlighting.</p>
+        </header>
+        <div id="projectList" class="list-container"></div>
+        <button id="addProjectBtn" class="btn btn-outline btn-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Project
+        </button>
+      </div>
+
+      <!-- Page 6: Skills -->
+      <div class="page" data-page="6">
+        <header class="page-header">
+          <h2>Skills</h2>
+          <p>Comma-separated or one per line. Be specific — tools beat buzzwords.</p>
+        </header>
+        <label class="field">
+          <span>Skills</span>
+          <textarea id="skills" rows="6" class="textarea" placeholder="Figma, Design Systems, User Research, Prototyping..."></textarea>
+        </label>
+      </div>
+
+      <!-- Page 7: Tailor & Export -->
+      <div class="page" data-page="7">
+        <header class="page-header">
+          <h2>Tailor & Export</h2>
+          <p>Paste a job description to see how well your resume matches.</p>
+        </header>
+        <label class="field">
+          <span>Job Description</span>
+          <textarea id="jobDescription" rows="8" class="textarea" placeholder="Paste the full job posting here..."></textarea>
+        </label>
+        <button id="aiTailorBtn" class="btn btn-ai btn-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          Analyze Match
+        </button>
+        <div id="aiOutput" class="ai-output hidden"></div>
+
+        <div class="export-cta">
+          <h3>Ready to send it?</h3>
+          <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
+          <button id="exportBtn2" class="btn btn-primary btn-lg btn-block">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export as PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer nav -->
+      <footer class="page-footer">
+        <button id="prevBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <div class="step-counter">Step 1 of 7</div>
+        <button id="nextBtn" class="btn btn-primary">
+          Next
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </footer>
+    </section>
+
+    <!-- Preview -->
+    <aside class="preview-panel" id="previewPanel">
+      <div class="preview-panel-header no-print">
+        <span>Live Preview</span>
+        <button id="previewClose" class="icon-btn-sm preview-close" aria-label="Close preview">×</button>
+      </div>
+      <div class="preview-container" id="preview"></div>
+    </aside>
+  </main>
+
+  <!-- ============ AI DRAFT MODAL ============ -->
+  <div id="aiModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Review AI Draft</h3>
+        <button id="aiModalClose" class="icon-btn-sm" aria-label="Close">×</button>
+      </div>
+      <p class="modal-sub">Edit as needed, then click <strong>Apply</strong>.</p>
+      <textarea id="aiDraft" rows="12" class="textarea modal-textarea"></textarea>
+      <div class="modal-footer">
+        <button id="aiModalCancel" class="btn btn-secondary">Cancel</button>
+        <button id="aiModalApply" class="btn btn-primary">Apply</button>
       </div>
     </div>
   </div>
