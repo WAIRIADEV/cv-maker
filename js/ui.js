@@ -3,6 +3,33 @@ import { resume } from './state.js';
 import { escapeHtml } from './utils.js';
 
 /* ============================================================
+   VIEW SWITCHING & TEMPLATES
+   ============================================================ */
+export const TEMPLATES = ['classic', 'modern', 'coral', 'emerald', 'minimal'];
+
+export function switchView(view) {
+  document.body.dataset.view = view;
+  if (view === 'editor') {
+    goToStep(1);
+  } else {
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.template === resume.template);
+    });
+    const hasContent = !!(resume.name || resume.summary || resume.experience.length);
+    document.getElementById('continueCta')?.classList.toggle('hidden', !hasContent);
+  }
+}
+
+export function applyTemplate(name) {
+  if (!TEMPLATES.includes(name)) name = 'modern';
+  resume.template = name;
+  const preview = document.getElementById('preview');
+  if (!preview) return;
+  preview.classList.remove(...TEMPLATES.map(t => `template-${t}`));
+  preview.classList.add(`template-${name}`);
+}
+
+/* ============================================================
    STEP NAVIGATION
    ============================================================ */
 const TOTAL_STEPS = 7;
@@ -104,13 +131,11 @@ export function renderExperience() {
 
 export function addExperience() {
   resume.experience.push({ company: '', role: '', start: '', end: '', location: '', bullets: [] });
-  renderExperience();
-  updatePreview();
+  renderExperience(); updatePreview();
 }
 export function removeExperience(i) {
   resume.experience.splice(i, 1);
-  renderExperience();
-  updatePreview();
+  renderExperience(); updatePreview();
 }
 
 /* ============================================================
@@ -154,13 +179,11 @@ export function renderEducation() {
 
 export function addEducation() {
   resume.education.push({ school: '', degree: '', start: '', end: '', location: '', details: '' });
-  renderEducation();
-  updatePreview();
+  renderEducation(); updatePreview();
 }
 export function removeEducation(i) {
   resume.education.splice(i, 1);
-  renderEducation();
-  updatePreview();
+  renderEducation(); updatePreview();
 }
 
 /* ============================================================
@@ -197,13 +220,11 @@ export function renderProjects() {
 
 export function addProject() {
   resume.projects.push({ name: '', link: '', bullets: [] });
-  renderProjects();
-  updatePreview();
+  renderProjects(); updatePreview();
 }
 export function removeProject(i) {
   resume.projects.splice(i, 1);
-  renderProjects();
-  updatePreview();
+  renderProjects(); updatePreview();
 }
 
 /* ============================================================
@@ -221,6 +242,10 @@ export function renderAll() {
 export function updatePreview() {
   const preview = document.getElementById('preview');
   if (!preview) return;
+
+  // Keep the template class in sync
+  preview.classList.remove(...TEMPLATES.map(t => `template-${t}`));
+  preview.classList.add(`template-${resume.template || 'modern'}`);
 
   const contact = [resume.email, resume.phone, resume.location, resume.website, resume.linkedin, resume.github]
     .filter(Boolean).map(escapeHtml).join(' &nbsp;•&nbsp; ');

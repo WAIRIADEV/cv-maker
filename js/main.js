@@ -1,8 +1,10 @@
+import { resume } from './state.js';
 import { loadResumeFromStorage, saveResume, clearResumeStorage } from './storage.js';
 import {
   renderAll, updatePreview, populateInputs, bindTopLevelInputs, initUI,
   addExperience, addEducation, addProject,
-  initAIModal, initStepper, togglePreview, closePreview
+  initAIModal, initStepper, togglePreview, closePreview,
+  switchView, applyTemplate
 } from './ui.js';
 import { aiGenerateSummary, aiImproveBullets, aiTailor } from './ai.js';
 
@@ -35,7 +37,32 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIModal();
   initStepper();
 
-  // Settings
+  // Apply saved template FIRST, then show gallery
+  applyTemplate(resume.template || 'modern');
+  switchView('gallery');
+
+  // ---- Gallery interactions ----
+  document.querySelectorAll('.template-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const name = card.dataset.template;
+      applyTemplate(name);
+      updatePreview();
+      switchView('editor');
+      saveResume(); // persist template choice
+    });
+  });
+
+  document.getElementById('continueBtn')?.addEventListener('click', () => {
+    applyTemplate(resume.template || 'modern');
+    updatePreview();
+    switchView('editor');
+  });
+
+  document.getElementById('brandHome')?.addEventListener('click', () => {
+    switchView('gallery');
+  });
+
+  // ---- Settings ----
   loadSettings();
   document.getElementById('ollamaUrl')?.addEventListener('input', saveSettings);
   document.getElementById('ollamaModel')?.addEventListener('input', saveSettings);
@@ -50,16 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('click', e => {
     if (!settingsPanel || settingsPanel.classList.contains('hidden')) return;
-    if (!settingsPanel.contains(e.target) && e.target.closest('#settingsBtn') === null) {
+    if (!settingsPanel.contains(e.target) && !e.target.closest('#settingsBtn')) {
       settingsPanel.classList.add('hidden');
     }
   });
 
-  // Preview toggle (mobile)
+  // ---- Preview toggle (mobile) ----
   document.getElementById('previewToggle')?.addEventListener('click', togglePreview);
   document.getElementById('previewClose')?.addEventListener('click', closePreview);
 
-  // Header actions
+  // ---- Header actions ----
   document.getElementById('exportBtn')?.addEventListener('click', () => window.print());
   document.getElementById('exportBtn2')?.addEventListener('click', () => window.print());
   document.getElementById('saveBtn')?.addEventListener('click', saveResume);
@@ -72,12 +99,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Add buttons
+  // ---- Add buttons ----
   document.getElementById('addExperienceBtn')?.addEventListener('click', addExperience);
   document.getElementById('addEducationBtn')?.addEventListener('click', addEducation);
   document.getElementById('addProjectBtn')?.addEventListener('click', addProject);
 
-  // AI buttons
+  // ---- AI buttons ----
   document.getElementById('aiSummaryBtn')?.addEventListener('click', e => aiGenerateSummary(e.currentTarget));
   document.getElementById('aiTailorBtn')?.addEventListener('click', e => aiTailor(e.currentTarget));
 

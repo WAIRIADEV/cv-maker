@@ -7,227 +7,292 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Lora:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/gallery.css" />
+  <link rel="stylesheet" href="css/templates.css" />
 </head>
-<body>
-  <!-- ============ HEADER ============ -->
+<body data-view="gallery">
+  <!-- HEADER -->
   <header class="app-header no-print">
     <div class="app-header-inner">
-      <div class="brand">
+      <button id="brandHome" class="brand" title="Back to templates" type="button">
         <div class="brand-mark">CV</div>
         <span class="brand-name">AI CV Maker</span>
-      </div>
+      </button>
 
       <div class="header-actions">
-        <button id="settingsBtn" class="icon-btn" title="AI Settings" aria-label="AI Settings">
+        <button id="settingsBtn" class="icon-btn" title="AI Settings" aria-label="AI Settings" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
 
-        <button id="previewToggle" class="icon-btn preview-toggle" title="Toggle preview" aria-label="Toggle preview">
+        <button id="previewToggle" class="icon-btn preview-toggle" title="Toggle preview" aria-label="Toggle preview" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
 
-        <button id="saveBtn" class="btn btn-secondary">
+        <button id="saveBtn" class="btn btn-secondary" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           <span>Save</span>
         </button>
 
-        <button id="clearBtn" class="btn btn-danger-ghost">
+        <button id="clearBtn" class="btn btn-danger-ghost" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           <span>Clear</span>
         </button>
 
-        <button id="exportBtn" class="btn btn-primary">
+        <button id="exportBtn" class="btn btn-primary" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Export PDF</span>
         </button>
       </div>
     </div>
 
-    <!-- Settings popover -->
     <div id="settingsPanel" class="settings-panel hidden">
       <div class="settings-panel-header">
         <h3>Ollama Settings</h3>
-        <button id="settingsClose" class="icon-btn-sm" aria-label="Close">×</button>
+        <button id="settingsClose" class="icon-btn-sm" aria-label="Close" type="button">×</button>
       </div>
       <label class="settings-field">
         <span>Ollama URL</span>
-        <input id="ollamaUrl" type="text" value="http://localhost:11434" placeholder="http://localhost:11434" />
+        <input id="ollamaUrl" type="text" value="http://localhost:11434" />
       </label>
       <label class="settings-field">
         <span>Model name</span>
-        <input id="ollamaModel" type="text" value="llama3.2" placeholder="llama3.2" />
+        <input id="ollamaModel" type="text" value="llama3.2" />
       </label>
-      <p class="settings-hint">These are saved locally in your browser.</p>
+      <p class="settings-hint">Saved locally in your browser.</p>
     </div>
   </header>
 
-  <!-- ============ STEPPER ============ -->
-  <nav class="stepper no-print" aria-label="Progress">
-    <ol>
-      <li data-step="1"><span class="step-num">1</span><span class="step-label">Personal</span></li>
-      <li data-step="2"><span class="step-num">2</span><span class="step-label">Summary</span></li>
-      <li data-step="3"><span class="step-num">3</span><span class="step-label">Experience</span></li>
-      <li data-step="4"><span class="step-num">4</span><span class="step-label">Education</span></li>
-      <li data-step="5"><span class="step-num">5</span><span class="step-label">Projects</span></li>
-      <li data-step="6"><span class="step-num">6</span><span class="step-label">Skills</span></li>
-      <li data-step="7"><span class="step-num">7</span><span class="step-label">Export</span></li>
-    </ol>
-    <div class="mobile-progress" aria-hidden="true">Step 1 of 7</div>
-  </nav>
-
-  <!-- ============ MAIN ============ -->
-  <main class="app-main">
-    <!-- Editor -->
-    <section class="editor no-print">
-      <!-- Page 1: Personal -->
-      <div class="page active" data-page="1">
-        <header class="page-header">
-          <h2>Personal Info</h2>
-          <p>The basics recruiters look for first.</p>
-        </header>
-        <div class="form-grid">
-          <label class="field"><span>Full Name</span><input id="name" placeholder="Jane Doe" /></label>
-          <label class="field"><span>Job Title</span><input id="title" placeholder="Product Designer" /></label>
-          <label class="field"><span>Email</span><input id="email" type="email" placeholder="jane@example.com" /></label>
-          <label class="field"><span>Phone</span><input id="phone" placeholder="+1 555 123 4567" /></label>
-          <label class="field"><span>Location</span><input id="location" placeholder="Berlin, Germany" /></label>
-          <label class="field"><span>Website</span><input id="website" placeholder="janedoe.com" /></label>
-          <label class="field"><span>LinkedIn</span><input id="linkedin" placeholder="linkedin.com/in/janedoe" /></label>
-          <label class="field"><span>GitHub</span><input id="github" placeholder="github.com/janedoe" /></label>
+  <!-- GALLERY VIEW -->
+  <div id="galleryView" class="gallery-view">
+    <div class="gallery-inner">
+      <div class="gallery-header">
+        <div>
+          <h2>Start a new document</h2>
+          <p class="gallery-sub">Pick a template. You can switch anytime.</p>
+        </div>
+        <div id="continueCta" class="continue-cta hidden">
+          <span>Resume in progress</span>
+          <button id="continueBtn" class="btn btn-primary btn-sm" type="button">Continue editing</button>
         </div>
       </div>
 
-      <!-- Page 2: Summary -->
-      <div class="page" data-page="2">
-        <header class="page-header">
-          <h2>Professional Summary</h2>
-          <p>2–4 sentences that sell your experience. Let AI draft it from your background.</p>
-        </header>
-        <div class="field-header">
-          <span>Summary</span>
-          <button id="aiSummaryBtn" class="btn btn-ai btn-sm">
+      <div class="template-grid">
+        <button class="template-card" data-template="classic" type="button">
+          <div class="thumb thumb-classic">
+            <div class="thumb-name"></div><div class="thumb-sub"></div><div class="thumb-rule"></div>
+            <div class="thumb-h2"></div><div class="thumb-line"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div><div class="thumb-h2"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div>
+          </div>
+          <div class="card-name">Classic Serif</div>
+          <div class="card-sub">Traditional, formal</div>
+        </button>
+
+        <button class="template-card" data-template="modern" type="button">
+          <div class="thumb thumb-modern">
+            <div class="thumb-name"></div><div class="thumb-sub"></div><div class="thumb-rule"></div>
+            <div class="thumb-h2"></div><div class="thumb-line"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div><div class="thumb-h2"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div>
+          </div>
+          <div class="card-name">Modern Writer</div>
+          <div class="card-sub">Clean, professional</div>
+        </button>
+
+        <button class="template-card" data-template="coral" type="button">
+          <div class="thumb thumb-coral">
+            <div class="thumb-name"></div><div class="thumb-sub"></div><div class="thumb-rule"></div>
+            <div class="thumb-h2"></div><div class="thumb-line"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div><div class="thumb-h2"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div>
+          </div>
+          <div class="card-name">Coral</div>
+          <div class="card-sub">Warm accent</div>
+        </button>
+
+        <button class="template-card" data-template="emerald" type="button">
+          <div class="thumb thumb-emerald">
+            <div class="thumb-name"></div><div class="thumb-sub"></div><div class="thumb-rule"></div>
+            <div class="thumb-h2"></div><div class="thumb-line"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div><div class="thumb-h2"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div>
+          </div>
+          <div class="card-name">Emerald</div>
+          <div class="card-sub">Fresh, confident</div>
+        </button>
+
+        <button class="template-card" data-template="minimal" type="button">
+          <div class="thumb thumb-minimal">
+            <div class="thumb-name"></div><div class="thumb-sub"></div><div class="thumb-rule"></div>
+            <div class="thumb-h2"></div><div class="thumb-line"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div><div class="thumb-h2"></div><div class="thumb-line"></div>
+            <div class="thumb-line short"></div>
+          </div>
+          <div class="card-name">Minimal</div>
+          <div class="card-sub">Ultra-clean, no color</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDITOR SHELL -->
+  <div id="appShell">
+    <nav class="stepper no-print" aria-label="Progress">
+      <ol>
+        <li data-step="1"><span class="step-num">1</span><span class="step-label">Personal</span></li>
+        <li data-step="2"><span class="step-num">2</span><span class="step-label">Summary</span></li>
+        <li data-step="3"><span class="step-num">3</span><span class="step-label">Experience</span></li>
+        <li data-step="4"><span class="step-num">4</span><span class="step-label">Education</span></li>
+        <li data-step="5"><span class="step-num">5</span><span class="step-label">Projects</span></li>
+        <li data-step="6"><span class="step-num">6</span><span class="step-label">Skills</span></li>
+        <li data-step="7"><span class="step-num">7</span><span class="step-label">Export</span></li>
+      </ol>
+      <div class="mobile-progress" aria-hidden="true">Step 1 of 7</div>
+    </nav>
+
+    <main class="app-main">
+      <section class="editor no-print">
+        <div class="page active" data-page="1">
+          <header class="page-header">
+            <h2>Personal Info</h2>
+            <p>The basics recruiters look for first.</p>
+          </header>
+          <div class="form-grid">
+            <label class="field"><span>Full Name</span><input id="name" placeholder="Jane Doe" /></label>
+            <label class="field"><span>Job Title</span><input id="title" placeholder="Product Designer" /></label>
+            <label class="field"><span>Email</span><input id="email" type="email" placeholder="jane@example.com" /></label>
+            <label class="field"><span>Phone</span><input id="phone" placeholder="+1 555 123 4567" /></label>
+            <label class="field"><span>Location</span><input id="location" placeholder="Berlin, Germany" /></label>
+            <label class="field"><span>Website</span><input id="website" placeholder="janedoe.com" /></label>
+            <label class="field"><span>LinkedIn</span><input id="linkedin" placeholder="linkedin.com/in/janedoe" /></label>
+            <label class="field"><span>GitHub</span><input id="github" placeholder="github.com/janedoe" /></label>
+          </div>
+        </div>
+
+        <div class="page" data-page="2">
+          <header class="page-header">
+            <h2>Professional Summary</h2>
+            <p>2–4 sentences that sell your experience. Let AI draft it from your background.</p>
+          </header>
+          <div class="field-header">
+            <span>Summary</span>
+            <button id="aiSummaryBtn" class="btn btn-ai btn-sm" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              AI Generate
+            </button>
+          </div>
+          <textarea id="summary" rows="6" class="textarea" placeholder="Experienced product designer with 6+ years..."></textarea>
+        </div>
+
+        <div class="page" data-page="3">
+          <header class="page-header">
+            <h2>Experience</h2>
+            <p>Add your roles, newest first. One bullet per line.</p>
+          </header>
+          <div id="experienceList" class="list-container"></div>
+          <button id="addExperienceBtn" class="btn btn-outline btn-block" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Experience
+          </button>
+        </div>
+
+        <div class="page" data-page="4">
+          <header class="page-header">
+            <h2>Education</h2>
+            <p>Degrees, certifications, or relevant coursework.</p>
+          </header>
+          <div id="educationList" class="list-container"></div>
+          <button id="addEducationBtn" class="btn btn-outline btn-block" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Education
+          </button>
+        </div>
+
+        <div class="page" data-page="5">
+          <header class="page-header">
+            <h2>Projects</h2>
+            <p>Side projects, open-source, or portfolio pieces worth highlighting.</p>
+          </header>
+          <div id="projectList" class="list-container"></div>
+          <button id="addProjectBtn" class="btn btn-outline btn-block" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Project
+          </button>
+        </div>
+
+        <div class="page" data-page="6">
+          <header class="page-header">
+            <h2>Skills</h2>
+            <p>Comma-separated or one per line. Be specific — tools beat buzzwords.</p>
+          </header>
+          <label class="field">
+            <span>Skills</span>
+            <textarea id="skills" rows="6" class="textarea" placeholder="Figma, Design Systems, User Research, Prototyping..."></textarea>
+          </label>
+        </div>
+
+        <div class="page" data-page="7">
+          <header class="page-header">
+            <h2>Tailor & Export</h2>
+            <p>Paste a job description to see how well your resume matches.</p>
+          </header>
+          <label class="field">
+            <span>Job Description</span>
+            <textarea id="jobDescription" rows="8" class="textarea" placeholder="Paste the full job posting here..."></textarea>
+          </label>
+          <button id="aiTailorBtn" class="btn btn-ai btn-block" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            AI Generate
+            Analyze Match
           </button>
+          <div id="aiOutput" class="ai-output hidden"></div>
+
+          <div class="export-cta">
+            <h3>Ready to send it?</h3>
+            <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
+            <button id="exportBtn2" class="btn btn-primary btn-lg btn-block" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export as PDF
+            </button>
+          </div>
         </div>
-        <textarea id="summary" rows="6" class="textarea" placeholder="Experienced product designer with 6+ years..."></textarea>
-      </div>
 
-      <!-- Page 3: Experience -->
-      <div class="page" data-page="3">
-        <header class="page-header">
-          <h2>Experience</h2>
-          <p>Add your roles, newest first. One bullet per line.</p>
-        </header>
-        <div id="experienceList" class="list-container"></div>
-        <button id="addExperienceBtn" class="btn btn-outline btn-block">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Experience
-        </button>
-      </div>
-
-      <!-- Page 4: Education -->
-      <div class="page" data-page="4">
-        <header class="page-header">
-          <h2>Education</h2>
-          <p>Degrees, certifications, or relevant coursework.</p>
-        </header>
-        <div id="educationList" class="list-container"></div>
-        <button id="addEducationBtn" class="btn btn-outline btn-block">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Education
-        </button>
-      </div>
-
-      <!-- Page 5: Projects -->
-      <div class="page" data-page="5">
-        <header class="page-header">
-          <h2>Projects</h2>
-          <p>Side projects, open-source, or portfolio pieces worth highlighting.</p>
-        </header>
-        <div id="projectList" class="list-container"></div>
-        <button id="addProjectBtn" class="btn btn-outline btn-block">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Project
-        </button>
-      </div>
-
-      <!-- Page 6: Skills -->
-      <div class="page" data-page="6">
-        <header class="page-header">
-          <h2>Skills</h2>
-          <p>Comma-separated or one per line. Be specific — tools beat buzzwords.</p>
-        </header>
-        <label class="field">
-          <span>Skills</span>
-          <textarea id="skills" rows="6" class="textarea" placeholder="Figma, Design Systems, User Research, Prototyping..."></textarea>
-        </label>
-      </div>
-
-      <!-- Page 7: Tailor & Export -->
-      <div class="page" data-page="7">
-        <header class="page-header">
-          <h2>Tailor & Export</h2>
-          <p>Paste a job description to see how well your resume matches.</p>
-        </header>
-        <label class="field">
-          <span>Job Description</span>
-          <textarea id="jobDescription" rows="8" class="textarea" placeholder="Paste the full job posting here..."></textarea>
-        </label>
-        <button id="aiTailorBtn" class="btn btn-ai btn-block">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-          Analyze Match
-        </button>
-        <div id="aiOutput" class="ai-output hidden"></div>
-
-        <div class="export-cta">
-          <h3>Ready to send it?</h3>
-          <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
-          <button id="exportBtn2" class="btn btn-primary btn-lg btn-block">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export as PDF
+        <footer class="page-footer">
+          <button id="prevBtn" class="btn btn-secondary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
           </button>
+          <div class="step-counter">Step 1 of 7</div>
+          <button id="nextBtn" class="btn btn-primary" type="button">
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </footer>
+      </section>
+
+      <aside class="preview-panel" id="previewPanel">
+        <div class="preview-panel-header no-print">
+          <span>Live Preview</span>
+          <button id="previewClose" class="icon-btn-sm preview-close" aria-label="Close preview" type="button">×</button>
         </div>
-      </div>
+        <div class="preview-container template-modern" id="preview"></div>
+      </aside>
+    </main>
+  </div>
 
-      <!-- Footer nav -->
-      <footer class="page-footer">
-        <button id="prevBtn" class="btn btn-secondary">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          Back
-        </button>
-        <div class="step-counter">Step 1 of 7</div>
-        <button id="nextBtn" class="btn btn-primary">
-          Next
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </footer>
-    </section>
-
-    <!-- Preview -->
-    <aside class="preview-panel" id="previewPanel">
-      <div class="preview-panel-header no-print">
-        <span>Live Preview</span>
-        <button id="previewClose" class="icon-btn-sm preview-close" aria-label="Close preview">×</button>
-      </div>
-      <div class="preview-container" id="preview"></div>
-    </aside>
-  </main>
-
-  <!-- ============ AI DRAFT MODAL ============ -->
+  <!-- AI MODAL -->
   <div id="aiModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-header">
         <h3>Review AI Draft</h3>
-        <button id="aiModalClose" class="icon-btn-sm" aria-label="Close">×</button>
+        <button id="aiModalClose" class="icon-btn-sm" aria-label="Close" type="button">×</button>
       </div>
       <p class="modal-sub">Edit as needed, then click <strong>Apply</strong>.</p>
       <textarea id="aiDraft" rows="12" class="textarea modal-textarea"></textarea>
       <div class="modal-footer">
-        <button id="aiModalCancel" class="btn btn-secondary">Cancel</button>
-        <button id="aiModalApply" class="btn btn-primary">Apply</button>
+        <button id="aiModalCancel" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="aiModalApply" class="btn btn-primary" type="button">Apply</button>
       </div>
     </div>
   </div>

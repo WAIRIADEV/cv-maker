@@ -1,0 +1,144 @@
+/* ============================================================
+   GALLERY VIEW
+   ============================================================ */
+body[data-view="gallery"] .stepper,
+body[data-view="gallery"] .app-main { display: none; }
+body[data-view="editor"] .gallery-view { display: none; }
+
+.gallery-view {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 40px 32px 60px;
+}
+.gallery-inner { max-width: 1200px; margin: 0 auto; }
+
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.gallery-header h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.gallery-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.continue-cta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.continue-cta.hidden { display: none; }
+
+/* ---- Template Grid ---- */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 24px;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform var(--transition);
+}
+.template-card:hover { transform: translateY(-2px); }
+.template-card.active .thumb {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* ---- Thumbnail ---- */
+.thumb {
+  aspect-ratio: 8.5 / 11;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow-xs);
+}
+.template-card:hover .thumb {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.thumb-name { height: 9px; width: 55%; background: #0f172a; border-radius: 2px; }
+.thumb-sub  { height: 4px; width: 38%; background: #94a3b8; border-radius: 2px; margin-bottom: 4px; }
+.thumb-rule { height: 1px; width: 100%; background: #e2e8f0; margin: 6px 0; }
+.thumb-h2   { height: 4px; width: 30%; background: #0f172a; border-radius: 2px; margin-top: 6px; margin-bottom: 2px; }
+.thumb-line { height: 3px; width: 100%; background: #cbd5e1; border-radius: 2px; }
+.thumb-line.short { width: 68%; }
+
+/* ---- Per-template accents ---- */
+.thumb-classic .thumb-name { background: #111; height: 11px; }
+.thumb-classic .thumb-sub  { background: #6b7280; }
+.thumb-classic .thumb-h2   { background: #111; height: 5px; }
+.thumb-classic .thumb-line { background: #d1d5db; }
+
+.thumb-modern .thumb-name { background: #2563eb; }
+.thumb-modern .thumb-sub  { background: #94a3b8; }
+.thumb-modern .thumb-h2   { background: #2563eb; }
+
+.thumb-coral .thumb-name { background: #ea580c; }
+.thumb-coral .thumb-sub  { background: #fb923c; }
+.thumb-coral .thumb-h2   { background: #ea580c; }
+.thumb-coral .thumb-line { background: #fed7aa; }
+
+.thumb-emerald .thumb-name { background: #059669; }
+.thumb-emerald .thumb-sub  { background: #10b981; }
+.thumb-emerald .thumb-h2   { background: #059669; }
+.thumb-emerald .thumb-line { background: #a7f3d0; }
+
+.thumb-minimal .thumb-name { background: #334155; height: 8px; }
+.thumb-minimal .thumb-sub  { background: #cbd5e1; }
+.thumb-minimal .thumb-h2   { background: #334155; height: 2px; }
+.thumb-minimal .thumb-line { background: #e2e8f0; }
+
+/* ---- Card labels ---- */
+.card-name {
+  margin-top: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.card-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .gallery-view { padding: 24px 16px 40px; }
+  .template-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .thumb { padding: 12px 10px; }
+  .gallery-header h2 { font-size: 16px; }
+}

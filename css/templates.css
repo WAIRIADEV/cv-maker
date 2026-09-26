@@ -1,0 +1,126 @@
+/* ============================================================
+   RESUME TEMPLATES
+   Applied to .preview-container.template-{name}
+   ============================================================ */
+
+/* ---------- CLASSIC SERIF ---------- */
+.preview-container.template-classic {
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  color: #111;
+  line-height: 1.5;
+}
+.preview-container.template-classic h1 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 24pt; font-weight: 700;
+  letter-spacing: -0.01em; color: #000;
+  text-align: center;
+}
+.preview-container.template-classic > p:nth-of-type(1) {
+  text-align: center; font-style: italic; color: #333;
+}
+.preview-container.template-classic > p:nth-of-type(2) { text-align: center; }
+.preview-container.template-classic h2 {
+  color: #000;
+  border-bottom: 1px solid #111;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11pt; font-weight: 700;
+}
+.preview-container.template-classic h3 { color: #111; }
+.preview-container.template-classic a { color: #111; text-decoration: underline; }
+
+/* ---------- MODERN WRITER ---------- */
+.preview-container.template-modern {
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+}
+.preview-container.template-modern h1 { color: #0f172a; letter-spacing: -0.025em; }
+.preview-container.template-modern h2 {
+  color: #2563eb;
+  border-bottom: 2px solid #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10pt; font-weight: 700;
+  padding-bottom: 5px;
+}
+.preview-container.template-modern h3 { color: #0f172a; }
+.preview-container.template-modern a { color: #2563eb; text-decoration: none; }
+.preview-container.template-modern a:hover { text-decoration: underline; }
+
+/* ---------- CORAL ---------- */
+.preview-container.template-coral {
+  font-family: 'Inter', sans-serif;
+  color: #292524;
+}
+.preview-container.template-coral h1 { color: #ea580c; letter-spacing: -0.02em; }
+.preview-container.template-coral h2 {
+  color: #ea580c;
+  border-bottom: none;
+  border-left: 4px solid #ea580c;
+  padding-left: 10px; padding-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10.5pt; font-weight: 700;
+}
+.preview-container.template-coral h3 { color: #1c1917; }
+.preview-container.template-coral ul { list-style: none; padding-left: 0; }
+.preview-container.template-coral li { position: relative; padding-left: 16px; }
+.preview-container.template-coral li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ea580c;
+}
+.preview-container.template-coral a { color: #ea580c; text-decoration: none; }
+
+/* ---------- EMERALD ---------- */
+.preview-container.template-emerald {
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+}
+.preview-container.template-emerald h1 { color: #065f46; letter-spacing: -0.02em; }
+.preview-container.template-emerald h2 {
+  color: #059669;
+  border-bottom: 1px solid #a7f3d0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10.5pt; font-weight: 700;
+  padding-bottom: 4px;
+}
+.preview-container.template-emerald h3 { color: #064e3b; }
+.preview-container.template-emerald a { color: #059669; text-decoration: none; }
+
+/* ---------- MINIMAL ---------- */
+.preview-container.template-minimal {
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  font-size: 10.5pt;
+}
+.preview-container.template-minimal h1 {
+  color: #0f172a;
+  font-size: 20pt; font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.preview-container.template-minimal h2 {
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 9pt; font-weight: 600;
+  padding-bottom: 4px;
+}
+.preview-container.template-minimal h3 { color: #0f172a; font-weight: 600; }
+.preview-container.template-minimal a {
+  color: #475569;
+  text-decoration: underline;
+  text-decoration-color: #cbd5e1;
+}
+
+@media print {
+  .preview-container { box-shadow: none !important; }
+  .preview-container.template-modern a,
+  .preview-container.template-coral a,
+  .preview-container.template-emerald a { color: inherit; }
+}
