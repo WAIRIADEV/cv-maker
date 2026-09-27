@@ -12,27 +12,39 @@ import {
 } from './ui.js';
 import { aiGenerateSummary, aiImproveBullets, aiDeepAnalysis } from './ai.js';
 import { analyzeResume } from './ats.js';
+import { semanticScan, clearEmbeddingCache } from './semantic.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { showToast, confirmDialog } from './toast.js';
 
 const SETTINGS_KEY = 'cv-maker-settings';
+let currentAtsMode = 'fast';
 
+/* ============================================================
+   SETTINGS
+   ============================================================ */
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-    if (s.url)   document.getElementById('ollamaUrl').value = s.url;
-    if (s.model) document.getElementById('ollamaModel').value = s.model;
+    if (s.url)        document.getElementById('ollamaUrl').value  = s.url;
+    if (s.model)      document.getElementById('ollamaModel').value = s.model;
+    if (s.embedModel) document.getElementById('embedModel').value  = s.embedModel;
+    if (s.atsMode)    currentAtsMode = s.atsMode;
   } catch { /* ignore */ }
 }
 
 function saveSettings() {
   const s = {
-    url:   document.getElementById('ollamaUrl').value,
-    model: document.getElementById('ollamaModel').value
+    url:        document.getElementById('ollamaUrl').value,
+    model:      document.getElementById('ollamaModel').value,
+    embedModel: document.getElementById('embedModel').value,
+    atsMode:    currentAtsMode
   };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
+/* ============================================================
+   JSON EXPORT / IMPORT
+   ============================================================ */
 function exportJSON() {
   const data = JSON.stringify(resume, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -78,6 +90,34 @@ function importJSON() {
   input.click();
 }
 
+/* ============================================================
+   ATS MODE + PROGRESS
+   ============================================================ */
+function setAtsMode(mode) {
+  currentAtsMode = mode;
+  document.querySelectorAll('.ats-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  saveSettings();
+}
+
+function showProgress(text, pct) {
+  const wrap = document.getElementById('atsProgress');
+  const fill = document.getElementById('atsProgressFill');
+  const txt  = document.getElementById('atsProgressText');
+  if (!wrap || !fill || !txt) return;
+  wrap.classList.remove('hidden');
+  fill.style.width = `${pct}%`;
+  txt.textContent = text;
+}
+
+function hideProgress() {
+  document.getElementById('atsProgress')?.classList.add('hidden');
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
 
@@ -104,19 +144,69 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`${next === 'dark' ? 'Dark' : 'Light'} mode`, 'info', 1800);
   });
 
-  document.getElementById('atsScanBtn')?.addEventListener('click', () => {
-    const jd = jdField?.value || '';
-    if (!jd.trim()) return showToast('Paste a job description first.', 'warn');
-    clearATSResults();
-    const result = analyzeResume(jd, resume);
-    renderATSResults(result);
-    showToast(`Scan complete — ${result.score}% match`, 'info', 2400);
+  // ATS mode toggle
+  document.querySelectorAll('.ats-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setAtsMode(btn.dataset.mode));
   });
 
+  // ATS scan
+  document.getElementById('atsScanBtn')?.addEventListener('click', async e => {
+    const jd = jdField?.value || '';
+    if (!jd.trim()) return showToast('Paste a job description first.', 'warn');
+
+    clearATSResults();
+    const btn = e.currentTarget;
+
+    if (currentAtsMode === 'fast') {
+      const result = analyzeResume(jd, resume);
+      renderATSResults(result);
+      showToast(`Fast scan complete — ${result.score}% match`, 'info', 2400);
+      return;
+    }
+
+    // Semantic mode
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Scanning…';
+    showProgress('Preparing embeddings…', 0);
+
+    try {
+      const url        = document.getElementById('ollamaUrl').value;
+      const embedModel = document.getElementById('embedModel').value || 'nomic-embed-text';
+
+      const result = await semanticScan(jd, resume, {
+        url,
+        embedModel,
+        onProgress: (done, total, phase) => {
+          const label = phase === 'keywords'
+            ? `Embedding keyword ${Math.min(done + 1, total)} of ${total}…`
+            : `Embedding resume section ${Math.min(done + 1, total)} of ${total}…`;
+          const pct = total ? Math.round((done / total) * 100) : 0;
+          showProgress(label, pct);
+        }
+      });
+
+      renderATSResults(result);
+      showToast(`Semantic scan complete — ${result.score}% match`, 'success', 2600);
+    } catch (err) {
+      if (err.code === 'MODEL_NOT_FOUND') {
+        showToast(err.message, 'error', 6000);
+      } else {
+        showToast('Semantic scan failed: ' + err.message, 'error', 5000);
+      }
+    } finally {
+      hideProgress();
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+
+  // AI Deep Analysis
   document.getElementById('atsAiBtn')?.addEventListener('click', e => {
     aiDeepAnalysis(e.currentTarget);
   });
 
+  // Gallery
   renderTemplateGallery();
   initTemplateModal();
   applyTemplate(resume.template || 'modern');
@@ -149,9 +239,15 @@ document.addEventListener('DOMContentLoaded', () => {
     switchView('gallery');
   });
 
+  // Settings
   loadSettings();
+  setAtsMode(currentAtsMode);
   document.getElementById('ollamaUrl')?.addEventListener('input', saveSettings);
   document.getElementById('ollamaModel')?.addEventListener('input', saveSettings);
+  document.getElementById('embedModel')?.addEventListener('input', () => {
+    saveSettings();
+    clearEmbeddingCache();
+  });
 
   document.getElementById('exportJsonBtn')?.addEventListener('click', exportJSON);
   document.getElementById('importJsonBtn')?.addEventListener('click', importJSON);
@@ -171,9 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Preview toggle
   document.getElementById('previewToggle')?.addEventListener('click', togglePreview);
   document.getElementById('previewClose')?.addEventListener('click', closePreview);
 
+  // Header actions
   document.getElementById('exportBtn')?.addEventListener('click', () => window.print());
   document.getElementById('exportBtn2')?.addEventListener('click', () => window.print());
   document.getElementById('saveBtn')?.addEventListener('click', () => {
@@ -189,21 +287,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (!ok) return;
     clearResumeStorage();
+    clearEmbeddingCache();
     populateInputs();
     renderAll();
     renderSectionOrder();
     clearATSResults();
+    hideProgress();
     if (jdField) jdField.value = '';
     updatePreview();
     showToast('All data cleared', 'info');
   });
 
+  // Add buttons
   document.getElementById('addExperienceBtn')?.addEventListener('click', addExperience);
   document.getElementById('addEducationBtn')?.addEventListener('click', addEducation);
   document.getElementById('addProjectBtn')?.addEventListener('click', addProject);
 
+  // AI summary
   document.getElementById('aiSummaryBtn')?.addEventListener('click', e => aiGenerateSummary(e.currentTarget));
 
+  // AI improve bullets
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="ai-improve"]');
     if (btn) aiImproveBullets(Number(btn.dataset.index), btn);
