@@ -2,6 +2,7 @@
 import { resume, SAMPLE_RESUME } from './state.js';
 import { escapeHtml } from './utils.js';
 import { scoreTier } from './ats.js';
+import { showToast } from './toast.js';
 
 /* ============================================================
    VIEW SWITCHING & TEMPLATES
@@ -313,6 +314,7 @@ function entryCardHeader(label, index, section) {
     <div class="entry-card-header">
       <div class="entry-drag" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</div>
       <span class="entry-card-title">${escapeHtml(label)}</span>
+      <button type="button" class="entry-action" data-action="duplicate" data-section="${section}" data-index="${index}" title="Duplicate this entry">Duplicate</button>
       <button type="button" class="entry-remove" data-action="remove" data-section="${section}" data-index="${index}">Remove</button>
     </div>
   `;
@@ -368,6 +370,12 @@ export function removeExperience(i) {
   resume.experience.splice(i, 1);
   renderExperience(); updatePreview();
 }
+export function duplicateExperience(i) {
+  const clone = JSON.parse(JSON.stringify(resume.experience[i]));
+  resume.experience.splice(i + 1, 0, clone);
+  renderExperience(); updatePreview();
+  showToast('Experience duplicated', 'success');
+}
 
 /* ============================================================
    EDUCATION
@@ -413,6 +421,12 @@ export function removeEducation(i) {
   resume.education.splice(i, 1);
   renderEducation(); updatePreview();
 }
+export function duplicateEducation(i) {
+  const clone = JSON.parse(JSON.stringify(resume.education[i]));
+  resume.education.splice(i + 1, 0, clone);
+  renderEducation(); updatePreview();
+  showToast('Education duplicated', 'success');
+}
 
 /* ============================================================
    PROJECTS
@@ -450,6 +464,12 @@ export function addProject() {
 export function removeProject(i) {
   resume.projects.splice(i, 1);
   renderProjects(); updatePreview();
+}
+export function duplicateProject(i) {
+  const clone = JSON.parse(JSON.stringify(resume.projects[i]));
+  resume.projects.splice(i + 1, 0, clone);
+  renderProjects(); updatePreview();
+  showToast('Project duplicated', 'success');
 }
 
 /* ============================================================
@@ -605,6 +625,16 @@ export function initUI() {
     });
 
     container.addEventListener('click', e => {
+      const dupBtn = e.target.closest('[data-action="duplicate"]');
+      if (dupBtn) {
+        const index = Number(dupBtn.dataset.index);
+        const section = dupBtn.dataset.section;
+        if (section === 'experience') duplicateExperience(index);
+        if (section === 'education')  duplicateEducation(index);
+        if (section === 'projects')   duplicateProject(index);
+        return;
+      }
+
       const btn = e.target.closest('[data-action="remove"]');
       if (!btn) return;
       const index = Number(btn.dataset.index);

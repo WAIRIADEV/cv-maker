@@ -1,6 +1,7 @@
 import { resume } from './state.js';
 import { renderExperience, updatePreview, openAIDraftModal } from './ui.js';
 import { sanitizeAIOutput } from './utils.js';
+import { showToast } from './toast.js';
 
 async function callOllama(prompt) {
   const url   = document.getElementById('ollamaUrl').value.replace(/\/$/, '');
@@ -45,7 +46,7 @@ ${expText}`;
     const raw = await callOllama(prompt);
     openAIDraftModal(sanitizeAIOutput(raw), 'summary');
   } catch (e) {
-    alert('AI error: ' + e.message);
+    showToast('AI error: ' + e.message, 'error', 5000);
   } finally {
     btn.disabled = false; btn.textContent = original;
   }
@@ -54,7 +55,7 @@ ${expText}`;
 export async function aiImproveBullets(index, btn) {
   const exp = resume.experience[index];
   const current = (exp.bullets || []).join('\n');
-  if (!current.trim()) return alert('No bullets to improve.');
+  if (!current.trim()) return showToast('No bullet points to improve yet.', 'warn');
 
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Improving...';
@@ -78,7 +79,7 @@ ${current}`;
     renderExperience();
     updatePreview();
   } catch (e) {
-    alert('AI error: ' + e.message);
+    showToast('AI error: ' + e.message, 'error', 5000);
   } finally {
     btn.disabled = false; btn.textContent = original;
   }
@@ -86,7 +87,7 @@ ${current}`;
 
 export async function aiDeepAnalysis(btn) {
   const jd = document.getElementById('jobDescription')?.value || '';
-  if (!jd.trim()) return alert('Paste a job description first.');
+  if (!jd.trim()) return showToast('Paste a job description first.', 'warn');
 
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Analyzing...';
@@ -116,7 +117,7 @@ ${jd}`;
       output.classList.remove('hidden');
     }
   } catch (e) {
-    alert('AI error: ' + e.message);
+    showToast('AI error: ' + e.message, 'error', 5000);
   } finally {
     btn.disabled = false; btn.textContent = original;
   }

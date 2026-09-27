@@ -1,4 +1,4 @@
-import { resume } from './state.js';
+import { resume, setResume } from './state.js';
 import { loadResumeFromStorage, saveResume, clearResumeStorage } from './storage.js';
 import {
   renderAll, updatePreview, populateInputs, bindTopLevelInputs, initUI,
@@ -12,6 +12,8 @@ import {
 } from './ui.js';
 import { aiGenerateSummary, aiImproveBullets, aiDeepAnalysis } from './ai.js';
 import { analyzeResume } from './ats.js';
+import { initTheme, toggleTheme } from './theme.js';
+import { showToast, confirmDialog } from './toast.js';
 
 const SETTINGS_KEY = 'cv-maker-settings';
 
@@ -31,7 +33,54 @@ function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
+function exportJSON() {
+  const data = JSON.stringify(resume, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `resume-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Resume exported as JSON', 'success');
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.onchange = async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (typeof data !== 'object' || data === null) {
+        throw new Error('File does not contain a valid resume object.');
+      }
+      setResume(data);
+      populateInputs();
+      renderAll();
+      renderSectionOrder();
+      applyTemplate(resume.template || 'modern');
+      clearATSResults();
+      const jdField = document.getElementById('jobDescription');
+      if (jdField) jdField.value = resume.jobDescription || '';
+      updatePreview();
+      saveResume();
+      showToast('Resume imported successfully', 'success');
+    } catch (err) {
+      showToast('Import failed: ' + err.message, 'error', 5000);
+    }
+  };
+  input.click();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+
   loadResumeFromStorage();
   populateInputs();
   bindTopLevelInputs();
@@ -42,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIModal();
   initStepper();
 
-  // Job description field
   const jdField = document.getElementById('jobDescription');
   if (jdField) {
     jdField.value = resume.jobDescription || '';
@@ -51,21 +99,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ATS Scan (local, no AI)
+  document.getElementById('themeToggle')?.addEventListener('click', () => {
+    const next = toggleTheme();
+    showToast(`${next === 'dark' ? 'Dark' : 'Light'} mode`, 'info', 1800);
+  });
+
   document.getElementById('atsScanBtn')?.addEventListener('click', () => {
     const jd = jdField?.value || '';
-    if (!jd.trim()) return alert('Paste a job description first.');
+    if (!jd.trim()) return showToast('Paste a job description first.', 'warn');
     clearATSResults();
     const result = analyzeResume(jd, resume);
     renderATSResults(result);
+    showToast(`Scan complete — ${result.score}% match`, 'info', 2400);
   });
 
-  // AI Deep Analysis
   document.getElementById('atsAiBtn')?.addEventListener('click', e => {
     aiDeepAnalysis(e.currentTarget);
   });
 
-  // Gallery + template preview
   renderTemplateGallery();
   initTemplateModal();
   applyTemplate(resume.template || 'modern');
@@ -98,10 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
     switchView('gallery');
   });
 
-  // Settings
   loadSettings();
   document.getElementById('ollamaUrl')?.addEventListener('input', saveSettings);
   document.getElementById('ollamaModel')?.addEventListener('input', saveSettings);
+
+  document.getElementById('exportJsonBtn')?.addEventListener('click', exportJSON);
+  document.getElementById('importJsonBtn')?.addEventListener('click', importJSON);
 
   const settingsPanel = document.getElementById('settingsPanel');
   document.getElementById('settingsBtn')?.addEventListener('click', e => {
@@ -118,35 +171,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Preview toggle (mobile)
   document.getElementById('previewToggle')?.addEventListener('click', togglePreview);
   document.getElementById('previewClose')?.addEventListener('click', closePreview);
 
-  // Header actions
   document.getElementById('exportBtn')?.addEventListener('click', () => window.print());
   document.getElementById('exportBtn2')?.addEventListener('click', () => window.print());
-  document.getElementById('saveBtn')?.addEventListener('click', saveResume);
-  document.getElementById('clearBtn')?.addEventListener('click', () => {
-    if (confirm('Clear all data?')) {
-      clearResumeStorage();
-      populateInputs();
-      renderAll();
-      renderSectionOrder();
-      clearATSResults();
-      if (jdField) jdField.value = '';
-      updatePreview();
-    }
+  document.getElementById('saveBtn')?.addEventListener('click', () => {
+    saveResume();
+    showToast('Resume saved', 'success', 2000);
+  });
+  document.getElementById('clearBtn')?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: 'Clear all data?',
+      message: 'This will permanently delete your resume, template choice, and job description. This cannot be undone.',
+      confirmLabel: 'Clear everything',
+      danger: true
+    });
+    if (!ok) return;
+    clearResumeStorage();
+    populateInputs();
+    renderAll();
+    renderSectionOrder();
+    clearATSResults();
+    if (jdField) jdField.value = '';
+    updatePreview();
+    showToast('All data cleared', 'info');
   });
 
-  // Add buttons
   document.getElementById('addExperienceBtn')?.addEventListener('click', addExperience);
   document.getElementById('addEducationBtn')?.addEventListener('click', addEducation);
   document.getElementById('addProjectBtn')?.addEventListener('click', addProject);
 
-  // AI summary
   document.getElementById('aiSummaryBtn')?.addEventListener('click', e => aiGenerateSummary(e.currentTarget));
 
-  // AI improve bullets (delegated)
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="ai-improve"]');
     if (btn) aiImproveBullets(Number(btn.dataset.index), btn);
