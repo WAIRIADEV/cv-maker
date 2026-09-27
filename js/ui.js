@@ -1,11 +1,34 @@
 // js/ui.js
-import { resume } from './state.js';
+import { resume, SAMPLE_RESUME } from './state.js';
 import { escapeHtml } from './utils.js';
 
 /* ============================================================
    VIEW SWITCHING & TEMPLATES
    ============================================================ */
 export const TEMPLATES = ['classic', 'modern', 'coral', 'emerald', 'minimal'];
+
+export const TEMPLATE_META = {
+  classic: {
+    name: 'Classic Serif',
+    desc: 'A traditional, formal layout with serif typography. Best for law, academia, finance, and any conservative industry.'
+  },
+  modern: {
+    name: 'Modern Writer',
+    desc: 'Clean sans-serif with a blue accent. A safe, professional default that works across industries.'
+  },
+  coral: {
+    name: 'Coral',
+    desc: 'Warm orange accent with custom bullet styling. Good for design, marketing, and creative roles.'
+  },
+  emerald: {
+    name: 'Emerald',
+    desc: 'Fresh green accent. Works well for healthcare, sustainability, and product roles.'
+  },
+  minimal: {
+    name: 'Minimal',
+    desc: 'Ultra-clean, mostly black and white. Maximum content, minimum decoration. Great for ATS-heavy applications.'
+  }
+};
 
 export function switchView(view) {
   document.body.dataset.view = view;
@@ -23,10 +46,178 @@ export function switchView(view) {
 export function applyTemplate(name) {
   if (!TEMPLATES.includes(name)) name = 'modern';
   resume.template = name;
-  const preview = document.getElementById('preview');
-  if (!preview) return;
-  preview.classList.remove(...TEMPLATES.map(t => `template-${t}`));
-  preview.classList.add(`template-${name}`);
+  updatePreview();
+}
+
+/* ============================================================
+   RESUME RENDERER (shared)
+   ============================================================ */
+export function renderResumeHTML(data = resume) {
+  const contact = [data.email, data.phone, data.location, data.website, data.linkedin, data.github]
+    .filter(Boolean).map(escapeHtml).join(' &nbsp;•&nbsp; ');
+
+  let html = `
+    <h1>${escapeHtml(data.name) || 'Your Name'}</h1>
+    <p style="font-size:12pt; color:#475569; margin-bottom:2px;">${escapeHtml(data.title) || 'Job Title'}</p>
+    <p style="font-size:9.5pt; color:#64748b; margin-bottom:14px;">${contact}</p>
+    ${data.summary ? `<h2>Summary</h2><p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>` : ''}
+  `;
+
+  if (data.experience?.some(e => e.company || e.role)) {
+    html += `<h2>Experience</h2>`;
+    data.experience.forEach(exp => {
+      if (!exp.company && !exp.role) return;
+      html += `<div style="margin-bottom:12px">
+        <h3>${escapeHtml(exp.role)}${exp.company ? ' — ' + escapeHtml(exp.company) : ''}</h3>
+        <p style="font-size:9.5pt; color:#64748b; margin-bottom:4px;">
+          ${escapeHtml(exp.start)}${exp.end ? ' – ' + escapeHtml(exp.end) : ''}${exp.location ? ' · ' + escapeHtml(exp.location) : ''}
+        </p>
+        <ul>${(exp.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      </div>`;
+    });
+  }
+
+  if (data.education?.some(e => e.school || e.degree)) {
+    html += `<h2>Education</h2>`;
+    data.education.forEach(edu => {
+      if (!edu.school && !edu.degree) return;
+      html += `<div style="margin-bottom:8px">
+        <h3>${escapeHtml(edu.degree)}${edu.school ? ' — ' + escapeHtml(edu.school) : ''}</h3>
+        <p style="font-size:9.5pt; color:#64748b;">
+          ${escapeHtml(edu.start)}${edu.end ? ' – ' + escapeHtml(edu.end) : ''}${edu.location ? ' · ' + escapeHtml(edu.location) : ''}
+        </p>
+        ${edu.details ? `<p>${escapeHtml(edu.details)}</p>` : ''}
+      </div>`;
+    });
+  }
+
+  if (data.projects?.some(p => p.name)) {
+    html += `<h2>Projects</h2>`;
+    data.projects.forEach(proj => {
+      if (!proj.name) return;
+      html += `<div style="margin-bottom:8px">
+        <h3>${escapeHtml(proj.name)}${proj.link ? ` — <a href="${escapeHtml(proj.link)}">${escapeHtml(proj.link)}</a>` : ''}</h3>
+        <ul>${(proj.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      </div>`;
+    });
+  }
+
+  if (data.skills) {
+    html += `<h2>Skills</h2><p>${escapeHtml(data.skills).replace(/\n/g, '<br>')}</p>`;
+  }
+
+  return html;
+}
+
+/* ============================================================
+   TEMPLATE GALLERY
+   ============================================================ */
+const BASE_WIDTH = 816; // 8.5in at 96dpi
+const BASE_HEIGHT = 1056; // 11in at 96dpi
+
+export function renderTemplateGallery() {
+  const grid = document.getElementById('templateGrid');
+  if (!grid) return;
+
+  grid.innerHTML = TEMPLATES.map(name => {
+    const meta = TEMPLATE_META[name];
+    return `
+      <button class="template-card" data-template="${name}" type="button">
+        <div class="thumb">
+          <div class="thumb-inner preview-container template-${name}"></div>
+        </div>
+        <div class="card-name">${escapeHtml(meta.name)}</div>
+        <div class="card-sub">${escapeHtml(meta.desc.split('.')[0])}</div>
+      </button>
+    `;
+  }).join('');
+
+  // Fill thumbnails with sample content
+  grid.querySelectorAll('.thumb-inner').forEach(inner => {
+    inner.innerHTML = renderResumeHTML(SAMPLE_RESUME);
+  });
+
+  scaleThumbnails();
+  syncActiveCard();
+}
+
+export function scaleThumbnails() {
+  document.querySelectorAll('.thumb').forEach(thumb => {
+    const inner = thumb.querySelector('.thumb-inner');
+    if (!inner) return;
+    const scale = thumb.clientWidth / BASE_WIDTH;
+    inner.style.transform = `scale(${scale})`;
+  });
+}
+
+function syncActiveCard() {
+  document.querySelectorAll('.template-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.template === resume.template);
+  });
+}
+
+/* ============================================================
+   TEMPLATE PREVIEW MODAL
+   ============================================================ */
+let previewingTemplate = null;
+
+export function openTemplatePreview(name) {
+  if (!TEMPLATES.includes(name)) return;
+  previewingTemplate = name;
+
+  const modal = document.getElementById('templateModal');
+  const preview = document.getElementById('templateModalPreview');
+  const nameEl = document.getElementById('templateModalName');
+  const descEl = document.getElementById('templateModalDesc');
+  if (!modal || !preview) return;
+
+  const meta = TEMPLATE_META[name];
+  preview.className = `template-preview-inner preview-container template-${name}`;
+  preview.innerHTML = renderResumeHTML(SAMPLE_RESUME);
+  nameEl.textContent = meta.name;
+  descEl.textContent = meta.desc;
+
+  modal.classList.remove('hidden');
+  // Scale after the modal is visible so clientWidth is correct
+  requestAnimationFrame(scaleModalPreview);
+}
+
+export function closeTemplatePreview() {
+  const modal = document.getElementById('templateModal');
+  modal?.classList.add('hidden');
+  previewingTemplate = null;
+}
+
+export function confirmTemplatePreview() {
+  if (!previewingTemplate) return;
+  applyTemplate(previewingTemplate);
+  closeTemplatePreview();
+  switchView('editor');
+}
+
+function scaleModalPreview() {
+  const frame = document.querySelector('.template-preview-frame');
+  const inner = document.getElementById('templateModalPreview');
+  if (!frame || !inner) return;
+  const scale = frame.clientWidth / BASE_WIDTH;
+  inner.style.transform = `scale(${scale})`;
+}
+
+export function initTemplateModal() {
+  document.getElementById('templateModalClose')?.addEventListener('click', closeTemplatePreview);
+  document.getElementById('templateCancelBtn')?.addEventListener('click', closeTemplatePreview);
+  document.getElementById('templateUseBtn')?.addEventListener('click', confirmTemplatePreview);
+
+  const modal = document.getElementById('templateModal');
+  modal?.addEventListener('click', e => {
+    if (e.target === modal) closeTemplatePreview();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+      closeTemplatePreview();
+    }
+  });
 }
 
 /* ============================================================
@@ -243,64 +434,9 @@ export function updatePreview() {
   const preview = document.getElementById('preview');
   if (!preview) return;
 
-  // Keep the template class in sync
   preview.classList.remove(...TEMPLATES.map(t => `template-${t}`));
   preview.classList.add(`template-${resume.template || 'modern'}`);
-
-  const contact = [resume.email, resume.phone, resume.location, resume.website, resume.linkedin, resume.github]
-    .filter(Boolean).map(escapeHtml).join(' &nbsp;•&nbsp; ');
-
-  let html = `
-    <h1>${escapeHtml(resume.name) || 'Your Name'}</h1>
-    <p style="font-size:12pt; color:#475569; margin-bottom:2px;">${escapeHtml(resume.title) || 'Job Title'}</p>
-    <p style="font-size:9.5pt; color:#64748b; margin-bottom:14px;">${contact}</p>
-    ${resume.summary ? `<h2>Summary</h2><p>${escapeHtml(resume.summary).replace(/\n/g, '<br>')}</p>` : ''}
-  `;
-
-  if (resume.experience.some(e => e.company || e.role)) {
-    html += `<h2>Experience</h2>`;
-    resume.experience.forEach(exp => {
-      if (!exp.company && !exp.role) return;
-      html += `<div style="margin-bottom:12px">
-        <h3>${escapeHtml(exp.role)}${exp.company ? ' — ' + escapeHtml(exp.company) : ''}</h3>
-        <p style="font-size:9.5pt; color:#64748b; margin-bottom:4px;">
-          ${escapeHtml(exp.start)}${exp.end ? ' – ' + escapeHtml(exp.end) : ''}${exp.location ? ' · ' + escapeHtml(exp.location) : ''}
-        </p>
-        <ul>${(exp.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
-      </div>`;
-    });
-  }
-
-  if (resume.education.some(e => e.school || e.degree)) {
-    html += `<h2>Education</h2>`;
-    resume.education.forEach(edu => {
-      if (!edu.school && !edu.degree) return;
-      html += `<div style="margin-bottom:8px">
-        <h3>${escapeHtml(edu.degree)}${edu.school ? ' — ' + escapeHtml(edu.school) : ''}</h3>
-        <p style="font-size:9.5pt; color:#64748b;">
-          ${escapeHtml(edu.start)}${edu.end ? ' – ' + escapeHtml(edu.end) : ''}${edu.location ? ' · ' + escapeHtml(edu.location) : ''}
-        </p>
-        ${edu.details ? `<p>${escapeHtml(edu.details)}</p>` : ''}
-      </div>`;
-    });
-  }
-
-  if (resume.projects.some(p => p.name)) {
-    html += `<h2>Projects</h2>`;
-    resume.projects.forEach(proj => {
-      if (!proj.name) return;
-      html += `<div style="margin-bottom:8px">
-        <h3>${escapeHtml(proj.name)}${proj.link ? ` — <a href="${escapeHtml(proj.link)}">${escapeHtml(proj.link)}</a>` : ''}</h3>
-        <ul>${(proj.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
-      </div>`;
-    });
-  }
-
-  if (resume.skills) {
-    html += `<h2>Skills</h2><p>${escapeHtml(resume.skills).replace(/\n/g, '<br>')}</p>`;
-  }
-
-  preview.innerHTML = html;
+  preview.innerHTML = renderResumeHTML(resume);
 }
 
 /* ============================================================

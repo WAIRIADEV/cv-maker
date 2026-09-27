@@ -4,7 +4,9 @@ import {
   renderAll, updatePreview, populateInputs, bindTopLevelInputs, initUI,
   addExperience, addEducation, addProject,
   initAIModal, initStepper, togglePreview, closePreview,
-  switchView, applyTemplate
+  switchView, applyTemplate,
+  renderTemplateGallery, scaleThumbnails,
+  openTemplatePreview, initTemplateModal
 } from './ui.js';
 import { aiGenerateSummary, aiImproveBullets, aiTailor } from './ai.js';
 
@@ -37,32 +39,44 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIModal();
   initStepper();
 
-  // Apply saved template FIRST, then show gallery
+  // Gallery + template preview
+  renderTemplateGallery();
+  initTemplateModal();
   applyTemplate(resume.template || 'modern');
   switchView('gallery');
 
-  // ---- Gallery interactions ----
-  document.querySelectorAll('.template-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const name = card.dataset.template;
-      applyTemplate(name);
-      updatePreview();
-      switchView('editor');
-      saveResume(); // persist template choice
-    });
+  // Click a card → open template preview modal
+  document.getElementById('templateGrid')?.addEventListener('click', e => {
+    const card = e.target.closest('.template-card');
+    if (!card) return;
+    openTemplatePreview(card.dataset.template);
   });
 
+  // Rescale thumbnails and modal preview on resize
+  window.addEventListener('resize', () => {
+    scaleThumbnails();
+    const modal = document.getElementById('templateModal');
+    if (modal && !modal.classList.contains('hidden')) {
+      const frame = document.querySelector('.template-preview-frame');
+      const inner = document.getElementById('templateModalPreview');
+      if (frame && inner) {
+        inner.style.transform = `scale(${frame.clientWidth / 816})`;
+      }
+    }
+  });
+
+  // Continue editing CTA
   document.getElementById('continueBtn')?.addEventListener('click', () => {
     applyTemplate(resume.template || 'modern');
-    updatePreview();
     switchView('editor');
   });
 
+  // Brand → back to gallery
   document.getElementById('brandHome')?.addEventListener('click', () => {
     switchView('gallery');
   });
 
-  // ---- Settings ----
+  // Settings
   loadSettings();
   document.getElementById('ollamaUrl')?.addEventListener('input', saveSettings);
   document.getElementById('ollamaModel')?.addEventListener('input', saveSettings);
@@ -82,11 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ---- Preview toggle (mobile) ----
+  // Preview toggle (mobile)
   document.getElementById('previewToggle')?.addEventListener('click', togglePreview);
   document.getElementById('previewClose')?.addEventListener('click', closePreview);
 
-  // ---- Header actions ----
+  // Header actions
   document.getElementById('exportBtn')?.addEventListener('click', () => window.print());
   document.getElementById('exportBtn2')?.addEventListener('click', () => window.print());
   document.getElementById('saveBtn')?.addEventListener('click', saveResume);
@@ -99,12 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ---- Add buttons ----
+  // Add buttons
   document.getElementById('addExperienceBtn')?.addEventListener('click', addExperience);
   document.getElementById('addEducationBtn')?.addEventListener('click', addEducation);
   document.getElementById('addProjectBtn')?.addEventListener('click', addProject);
 
-  // ---- AI buttons ----
+  // AI buttons
   document.getElementById('aiSummaryBtn')?.addEventListener('click', e => aiGenerateSummary(e.currentTarget));
   document.getElementById('aiTailorBtn')?.addEventListener('click', e => aiTailor(e.currentTarget));
 
