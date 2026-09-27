@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/templates.css" />
 </head>
 <body data-view="gallery">
-  <!-- HEADER -->
+  <!-- ============ HEADER ============ -->
   <header class="app-header no-print">
     <div class="app-header-inner">
       <button id="brandHome" class="brand" title="Back to templates" type="button">
@@ -64,7 +64,7 @@
     </div>
   </header>
 
-  <!-- GALLERY VIEW -->
+  <!-- ============ GALLERY VIEW ============ -->
   <div id="galleryView" class="gallery-view">
     <div class="gallery-inner">
       <div class="gallery-header">
@@ -84,7 +84,7 @@
     </div>
   </div>
 
-  <!-- EDITOR SHELL -->
+  <!-- ============ EDITOR SHELL ============ -->
   <div id="appShell">
     <nav class="stepper no-print" aria-label="Progress">
       <ol>
@@ -101,6 +101,7 @@
 
     <main class="app-main">
       <section class="editor no-print">
+        <!-- Page 1: Personal -->
         <div class="page active" data-page="1">
           <header class="page-header">
             <h2>Personal Info</h2>
@@ -118,6 +119,7 @@
           </div>
         </div>
 
+        <!-- Page 2: Summary -->
         <div class="page" data-page="2">
           <header class="page-header">
             <h2>Professional Summary</h2>
@@ -133,6 +135,7 @@
           <textarea id="summary" rows="6" class="textarea" placeholder="Experienced product designer with 6+ years..."></textarea>
         </div>
 
+        <!-- Page 3: Experience -->
         <div class="page" data-page="3">
           <header class="page-header">
             <h2>Experience</h2>
@@ -145,6 +148,7 @@
           </button>
         </div>
 
+        <!-- Page 4: Education -->
         <div class="page" data-page="4">
           <header class="page-header">
             <h2>Education</h2>
@@ -157,6 +161,7 @@
           </button>
         </div>
 
+        <!-- Page 5: Projects -->
         <div class="page" data-page="5">
           <header class="page-header">
             <h2>Projects</h2>
@@ -169,6 +174,7 @@
           </button>
         </div>
 
+        <!-- Page 6: Skills -->
         <div class="page" data-page="6">
           <header class="page-header">
             <h2>Skills</h2>
@@ -180,39 +186,51 @@
           </label>
         </div>
 
+        <!-- Page 7: Tailor & Export -->
         <div class="page" data-page="7">
-  <header class="page-header">
-    <h2>Tailor & Export</h2>
-    <p>Paste a job description to see how well your resume matches.</p>
-  </header>
-  <label class="field">
-    <span>Job Description</span>
-    <textarea id="jobDescription" rows="8" class="textarea" placeholder="Paste the full job posting here..."></textarea>
-  </label>
-  <button id="aiTailorBtn" class="btn btn-ai btn-block" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-    Analyze Match
-  </button>
-  <div id="aiOutput" class="ai-output hidden"></div>
+          <header class="page-header">
+            <h2>Tailor & Export</h2>
+            <p>Scan your resume against a job description to find keyword gaps.</p>
+          </header>
 
-  <!-- NEW: Section Order panel -->
-  <section class="section-order-panel">
-    <div class="section-order-header">
-      <h3>Section Order</h3>
-      <p>Drag to change how sections appear in your resume.</p>
-    </div>
-    <div class="section-order-list" id="sectionOrderList"></div>
-  </section>
+          <label class="field">
+            <span>Job Description</span>
+            <textarea id="jobDescription" rows="7" class="textarea" placeholder="Paste the full job posting here..."></textarea>
+          </label>
 
-  <div class="export-cta">
-    <h3>Ready to send it?</h3>
-    <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
-    <button id="exportBtn2" class="btn btn-primary btn-lg btn-block" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export as PDF
-    </button>
-  </div>
-</div>
+          <div class="ats-actions">
+            <button id="atsScanBtn" class="btn btn-primary btn-block" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Scan Keywords
+            </button>
+            <button id="atsAiBtn" class="btn btn-ai btn-block" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              AI Deep Analysis
+            </button>
+          </div>
+
+          <section id="atsResults" class="ats-results hidden"></section>
+          <section id="aiOutput" class="ai-output hidden"></section>
+
+          <section class="section-order-panel">
+            <div class="section-order-header">
+              <h3>Section Order</h3>
+              <p>Drag to change how sections appear in your resume.</p>
+            </div>
+            <div class="section-order-list" id="sectionOrderList"></div>
+          </section>
+
+          <div class="export-cta">
+            <h3>Ready to send it?</h3>
+            <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
+            <button id="exportBtn2" class="btn btn-primary btn-lg btn-block" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export as PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Footer nav -->
         <footer class="page-footer">
           <button id="prevBtn" class="btn btn-secondary" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -226,6 +244,7 @@
         </footer>
       </section>
 
+      <!-- Preview panel -->
       <aside class="preview-panel" id="previewPanel">
         <div class="preview-panel-header no-print">
           <span>Live Preview</span>
@@ -236,7 +255,7 @@
     </main>
   </div>
 
-  <!-- TEMPLATE PREVIEW MODAL -->
+  <!-- ============ TEMPLATE PREVIEW MODAL ============ -->
   <div id="templateModal" class="modal hidden">
     <div class="template-modal-card">
       <button id="templateModalClose" class="template-modal-close" aria-label="Close" type="button">×</button>
@@ -273,7 +292,7 @@
     </div>
   </div>
 
-  <!-- AI MODAL -->
+  <!-- ============ AI DRAFT MODAL ============ -->
   <div id="aiModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-header">

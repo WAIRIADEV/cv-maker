@@ -7,9 +7,11 @@ import {
   switchView, applyTemplate,
   renderTemplateGallery, scaleThumbnails,
   openTemplatePreview, initTemplateModal,
-  renderSectionOrder
+  renderSectionOrder,
+  renderATSResults, clearATSResults
 } from './ui.js';
-import { aiGenerateSummary, aiImproveBullets, aiTailor } from './ai.js';
+import { aiGenerateSummary, aiImproveBullets, aiDeepAnalysis } from './ai.js';
+import { analyzeResume } from './ats.js';
 
 const SETTINGS_KEY = 'cv-maker-settings';
 
@@ -30,7 +32,6 @@ function saveSettings() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Data
   loadResumeFromStorage();
   populateInputs();
   bindTopLevelInputs();
@@ -40,6 +41,29 @@ document.addEventListener('DOMContentLoaded', () => {
   initUI();
   initAIModal();
   initStepper();
+
+  // Job description field
+  const jdField = document.getElementById('jobDescription');
+  if (jdField) {
+    jdField.value = resume.jobDescription || '';
+    jdField.addEventListener('input', () => {
+      resume.jobDescription = jdField.value;
+    });
+  }
+
+  // ATS Scan (local, no AI)
+  document.getElementById('atsScanBtn')?.addEventListener('click', () => {
+    const jd = jdField?.value || '';
+    if (!jd.trim()) return alert('Paste a job description first.');
+    clearATSResults();
+    const result = analyzeResume(jd, resume);
+    renderATSResults(result);
+  });
+
+  // AI Deep Analysis
+  document.getElementById('atsAiBtn')?.addEventListener('click', e => {
+    aiDeepAnalysis(e.currentTarget);
+  });
 
   // Gallery + template preview
   renderTemplateGallery();
@@ -108,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
       populateInputs();
       renderAll();
       renderSectionOrder();
+      clearATSResults();
+      if (jdField) jdField.value = '';
       updatePreview();
     }
   });
@@ -117,10 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addEducationBtn')?.addEventListener('click', addEducation);
   document.getElementById('addProjectBtn')?.addEventListener('click', addProject);
 
-  // AI buttons
+  // AI summary
   document.getElementById('aiSummaryBtn')?.addEventListener('click', e => aiGenerateSummary(e.currentTarget));
-  document.getElementById('aiTailorBtn')?.addEventListener('click', e => aiTailor(e.currentTarget));
 
+  // AI improve bullets (delegated)
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="ai-improve"]');
     if (btn) aiImproveBullets(Number(btn.dataset.index), btn);

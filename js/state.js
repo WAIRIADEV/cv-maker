@@ -2,7 +2,7 @@ export const defaultResume = {
   template: 'modern',
   sectionOrder: ['summary', 'experience', 'education', 'projects', 'skills'],
   name: "", title: "", email: "", phone: "", location: "", website: "", linkedin: "", github: "",
-  summary: "", skills: "",
+  summary: "", skills: "", jobDescription: "",
   experience: [],
   education: [],
   projects: []
@@ -67,7 +67,6 @@ export let resume = JSON.parse(JSON.stringify(defaultResume));
 
 export function setResume(newResume) {
   resume = { ...JSON.parse(JSON.stringify(defaultResume)), ...newResume };
-  // Ensure sectionOrder is always a valid array
   if (!Array.isArray(resume.sectionOrder) || !resume.sectionOrder.length) {
     resume.sectionOrder = [...defaultResume.sectionOrder];
   }

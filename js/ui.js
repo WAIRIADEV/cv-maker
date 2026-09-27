@@ -1,6 +1,7 @@
 // js/ui.js
 import { resume, SAMPLE_RESUME } from './state.js';
 import { escapeHtml } from './utils.js';
+import { scoreTier } from './ats.js';
 
 /* ============================================================
    VIEW SWITCHING & TEMPLATES
@@ -590,7 +591,6 @@ export function initUI() {
     if (!container) return;
     const { collection, rerender } = SECTION_MAP[id];
 
-    // ---- input events ----
     container.addEventListener('input', e => {
       const wrapper = e.target.closest('[data-index]');
       if (!wrapper) return;
@@ -604,7 +604,6 @@ export function initUI() {
       updatePreview();
     });
 
-    // ---- remove ----
     container.addEventListener('click', e => {
       const btn = e.target.closest('[data-action="remove"]');
       if (!btn) return;
@@ -615,7 +614,6 @@ export function initUI() {
       if (section === 'projects')   removeProject(index);
     });
 
-    // ---- drag-to-reorder entries ----
     let draggingIndex = null;
     container.addEventListener('dragstart', e => {
       const card = e.target.closest('.entry-card');
@@ -668,8 +666,120 @@ export function initUI() {
     });
   });
 
-  // Section order drag
   initSectionOrderDrag();
+}
+
+/* ============================================================
+   ATS RESULTS RENDERING
+   ============================================================ */
+const SCORE_MESSAGES = {
+  high: {
+    title: 'Strong match',
+    body: 'Your resume covers most of the keywords recruiters and ATS filters look for. Keep the phrasing specific and quantified.'
+  },
+  mid: {
+    title: 'Decent match — room to improve',
+    body: 'Your resume hits about half of what this role asks for. Weave the high-priority missing keywords below into your summary, skills, or experience bullets — naturally.'
+  },
+  low: {
+    title: 'Weak match',
+    body: 'Many of the keywords this job emphasizes are missing. Address the high-priority ones first, then re-scan. Don\'t keyword-stuff — rephrase your real experience to include their vocabulary.'
+  }
+};
+
+function chipHTML(kw, type) {
+  const cls = type === 'matched'
+    ? 'ats-chip matched'
+    : kw.weight >= 1.5 ? 'ats-chip missing high' : 'ats-chip missing';
+  return `<span class="${cls}">${escapeHtml(kw.term)}</span>`;
+}
+
+export function renderATSResults(result) {
+  const panel = document.getElementById('atsResults');
+  if (!panel) return;
+
+  const tier = scoreTier(result.score);
+  const msg = SCORE_MESSAGES[tier];
+  const circumference = 2 * Math.PI * 52;
+  const offset = circumference * (1 - result.score / 100);
+  const matchedCount = result.matched.length;
+  const totalCount = result.total;
+
+  const matchedHTML = matchedCount
+    ? result.matched.map(k => chipHTML(k, 'matched')).join('')
+    : `<p class="ats-empty">No keywords from the job description matched your resume yet.</p>`;
+
+  const highMissing = result.highPriorityMissing;
+  const lowMissing = result.missing.filter(m => m.weight < 1.5);
+
+  let missingHTML = '';
+  if (highMissing.length) {
+    missingHTML += `
+      <div class="ats-section">
+        <h5>High priority missing <span class="ats-count">(${highMissing.length})</span></h5>
+        <div class="ats-chips">${highMissing.map(k => chipHTML(k, 'missing')).join('')}</div>
+      </div>`;
+  }
+  if (lowMissing.length) {
+    missingHTML += `
+      <div class="ats-section">
+        <h5>Also missing <span class="ats-count">(${lowMissing.length})</span></h5>
+        <div class="ats-chips">${lowMissing.map(k => chipHTML(k, 'missing')).join('')}</div>
+      </div>`;
+  }
+  if (!highMissing.length && !lowMissing.length) {
+    missingHTML = `<p class="ats-empty">Nothing missing. Your resume covers every keyword we found.</p>`;
+  }
+
+  panel.className = `ats-results tier-${tier}`;
+  panel.innerHTML = `
+    <div class="ats-score-row">
+      <div class="ats-score-ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="ats-score-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="ats-score-fill" cx="60" cy="60" r="52"
+                  stroke-dasharray="${circumference.toFixed(1)}"
+                  stroke-dashoffset="${circumference.toFixed(1)}"
+                  data-target-offset="${offset.toFixed(1)}"></circle>
+        </svg>
+        <div class="ats-score-value">${result.score}<small>%</small></div>
+      </div>
+      <div class="ats-score-caption">
+        <h4>${msg.title}</h4>
+        <p>${msg.body}</p>
+        <p style="margin-top:8px; font-size:12px; color:var(--text-soft);">
+          ${matchedCount} of ${totalCount} keywords matched
+        </p>
+      </div>
+    </div>
+
+    <div class="ats-section">
+      <h5>Matched <span class="ats-count">(${matchedCount})</span></h5>
+      <div class="ats-chips">${matchedHTML}</div>
+    </div>
+
+    ${missingHTML}
+  `;
+
+  panel.classList.remove('hidden');
+
+  requestAnimationFrame(() => {
+    const fill = panel.querySelector('.ats-score-fill');
+    if (fill) fill.setAttribute('stroke-dashoffset', fill.dataset.targetOffset);
+  });
+}
+
+export function clearATSResults() {
+  const panel = document.getElementById('atsResults');
+  if (panel) {
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+  }
+  const ai = document.getElementById('aiOutput');
+  if (ai) {
+    ai.classList.add('hidden');
+    ai.textContent = '';
+  }
 }
 
 /* ============================================================

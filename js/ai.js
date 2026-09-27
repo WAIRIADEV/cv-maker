@@ -84,28 +84,37 @@ ${current}`;
   }
 }
 
-export async function aiTailor(btn) {
-  const jd = document.getElementById('jobDescription').value;
+export async function aiDeepAnalysis(btn) {
+  const jd = document.getElementById('jobDescription')?.value || '';
   if (!jd.trim()) return alert('Paste a job description first.');
 
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Analyzing...';
   try {
     const resumeText = JSON.stringify(resume, null, 2);
-    const prompt = `You are a career coach. Compare this resume to the job description.
-Give specific, actionable suggestions: missing keywords, skills to add, phrasing to improve.
-Keep it concise. No markdown formatting.
+    const prompt = `You are an expert career coach and ATS specialist.
+The candidate's resume and the target job description are below.
 
-${STRICT_FORMAT}
+Give specific, actionable advice in this exact structure (plain text, no markdown, no asterisks):
 
-Resume:
+1. Top 3 keyword gaps — words or phrases in the job description that are missing or underrepresented in the resume.
+2. Three specific bullet rewrites — pick existing resume bullets and rewrite them to include the job's vocabulary while keeping them truthful.
+3. One strategic note — a single sentence about positioning, seniority, or narrative.
+
+Keep it under 220 words total. Do not use markdown formatting.
+
+Resume (JSON):
 ${resumeText}
 
 Job Description:
 ${jd}`;
 
     const raw = await callOllama(prompt);
-    document.getElementById('aiOutput').innerText = sanitizeAIOutput(raw);
+    const output = document.getElementById('aiOutput');
+    if (output) {
+      output.textContent = sanitizeAIOutput(raw);
+      output.classList.remove('hidden');
+    }
   } catch (e) {
     alert('AI error: ' + e.message);
   } finally {
