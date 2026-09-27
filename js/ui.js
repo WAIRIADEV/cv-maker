@@ -7,7 +7,7 @@ import { showToast } from './toast.js';
 /* ============================================================
    VIEW SWITCHING & TEMPLATES
    ============================================================ */
-export const TEMPLATES = ['classic', 'modern', 'coral', 'emerald', 'minimal'];
+export const TEMPLATES = ['classic', 'modern', 'coral', 'emerald', 'minimal', 'twocolumn', 'timeline', 'academic'];
 
 export const TEMPLATE_META = {
   classic: {
@@ -29,6 +29,18 @@ export const TEMPLATE_META = {
   minimal: {
     name: 'Minimal',
     desc: 'Ultra-clean, mostly black and white. Maximum content, minimum decoration. Great for ATS-heavy applications.'
+  },
+  twocolumn: {
+    name: 'Two-Column',
+    desc: 'Sidebar with contact, skills, and education; main area with experience. Dense, information-rich, ideal for senior roles.'
+  },
+  timeline: {
+    name: 'Timeline',
+    desc: 'Vertical timeline with nodes for each role. Great for showing career progression and continuous history.'
+  },
+  academic: {
+    name: 'Academic',
+    desc: 'Formal serif layout with generous spacing. Designed for research, teaching, and academic CV conventions.'
   }
 };
 
@@ -69,77 +81,177 @@ export function applyTemplate(name) {
 }
 
 /* ============================================================
-   RESUME RENDERER (shared)
+   RESUME RENDERER — flat layout
    ============================================================ */
 function renderSectionHTML(key, data) {
   switch (key) {
     case 'summary': {
       if (!data.summary) return '';
-      return `<h2>Summary</h2><p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>`;
+      return `<section class="resume-section"><h2>Summary</h2><p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p></section>`;
     }
     case 'experience': {
       if (!data.experience?.some(e => e.company || e.role)) return '';
-      let h = '<h2>Experience</h2>';
+      let h = '<section class="resume-section"><h2>Experience</h2>';
       data.experience.forEach(exp => {
         if (!exp.company && !exp.role) return;
-        h += `<div style="margin-bottom:12px">
+        h += `<div class="resume-item">
           <h3>${escapeHtml(exp.role)}${exp.company ? ' — ' + escapeHtml(exp.company) : ''}</h3>
-          <p style="font-size:9.5pt; color:#64748b; margin-bottom:4px;">
+          <p class="resume-meta">
             ${escapeHtml(exp.start)}${exp.end ? ' – ' + escapeHtml(exp.end) : ''}${exp.location ? ' · ' + escapeHtml(exp.location) : ''}
           </p>
           <ul>${(exp.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
         </div>`;
       });
-      return h;
+      return h + '</section>';
     }
     case 'education': {
       if (!data.education?.some(e => e.school || e.degree)) return '';
-      let h = '<h2>Education</h2>';
+      let h = '<section class="resume-section"><h2>Education</h2>';
       data.education.forEach(edu => {
         if (!edu.school && !edu.degree) return;
-        h += `<div style="margin-bottom:8px">
+        h += `<div class="resume-item">
           <h3>${escapeHtml(edu.degree)}${edu.school ? ' — ' + escapeHtml(edu.school) : ''}</h3>
-          <p style="font-size:9.5pt; color:#64748b;">
+          <p class="resume-meta">
             ${escapeHtml(edu.start)}${edu.end ? ' – ' + escapeHtml(edu.end) : ''}${edu.location ? ' · ' + escapeHtml(edu.location) : ''}
           </p>
           ${edu.details ? `<p>${escapeHtml(edu.details)}</p>` : ''}
         </div>`;
       });
-      return h;
+      return h + '</section>';
     }
     case 'projects': {
       if (!data.projects?.some(p => p.name)) return '';
-      let h = '<h2>Projects</h2>';
+      let h = '<section class="resume-section"><h2>Projects</h2>';
       data.projects.forEach(proj => {
         if (!proj.name) return;
-        h += `<div style="margin-bottom:8px">
+        h += `<div class="resume-item">
           <h3>${escapeHtml(proj.name)}${proj.link ? ` — <a href="${escapeHtml(proj.link)}">${escapeHtml(proj.link)}</a>` : ''}</h3>
           <ul>${(proj.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
         </div>`;
       });
-      return h;
+      return h + '</section>';
     }
     case 'skills': {
       if (!data.skills) return '';
-      return `<h2>Skills</h2><p>${escapeHtml(data.skills).replace(/\n/g, '<br>')}</p>`;
+      return `<section class="resume-section"><h2>Skills</h2><p>${escapeHtml(data.skills).replace(/\n/g, '<br>')}</p></section>`;
     }
     default: return '';
   }
 }
 
-export function renderResumeHTML(data = resume) {
+function renderFlatHTML(data) {
   const contact = [data.email, data.phone, data.location, data.website, data.linkedin, data.github]
     .filter(Boolean).map(escapeHtml).join(' &nbsp;•&nbsp; ');
 
   let html = `
-    <h1>${escapeHtml(data.name) || 'Your Name'}</h1>
-    <p style="font-size:12pt; color:#475569; margin-bottom:2px;">${escapeHtml(data.title) || 'Job Title'}</p>
-    <p style="font-size:9.5pt; color:#64748b; margin-bottom:14px;">${contact}</p>
+    <header class="resume-header">
+      <h1>${escapeHtml(data.name) || 'Your Name'}</h1>
+      <p class="resume-title">${escapeHtml(data.title) || 'Job Title'}</p>
+      <p class="resume-contact">${contact}</p>
+    </header>
   `;
 
   const order = normalizeSectionOrder(data.sectionOrder);
   order.forEach(key => { html += renderSectionHTML(key, data); });
   return html;
+}
+
+/* ============================================================
+   RESUME RENDERER — two-column layout
+   ============================================================ */
+function splitSkills(skills) {
+  return String(skills || '')
+    .split(/[,·•\n|;]/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function renderTwoColumnHTML(data) {
+  const contact = [data.email, data.phone, data.location, data.website, data.linkedin, data.github]
+    .filter(Boolean).map(escapeHtml);
+
+  const sidebar = `
+    <aside class="resume-sidebar">
+      ${contact.length ? `
+        <div class="resume-sidebar-block">
+          <h2>Contact</h2>
+          <ul class="resume-contact-list">
+            ${contact.map(c => `<li>${c}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+      ${data.skills ? `
+        <div class="resume-sidebar-block">
+          <h2>Skills</h2>
+          <ul class="resume-skill-list">
+            ${splitSkills(data.skills).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+      ${data.education?.length ? `
+        <div class="resume-sidebar-block">
+          <h2>Education</h2>
+          ${data.education.map(edu => `
+            <div class="resume-sidebar-item">
+              <h3>${escapeHtml(edu.degree) || 'Degree'}</h3>
+              <p>${escapeHtml(edu.school) || ''}</p>
+              <p class="resume-meta">${escapeHtml(edu.start)}${edu.end ? ' – ' + escapeHtml(edu.end) : ''}</p>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </aside>
+  `;
+
+  let main = `
+    <div class="resume-main">
+      <header class="resume-header">
+        <h1>${escapeHtml(data.name) || 'Your Name'}</h1>
+        <p class="resume-title">${escapeHtml(data.title) || 'Job Title'}</p>
+      </header>
+  `;
+
+  if (data.summary) {
+    main += `<section class="resume-section"><h2>Summary</h2><p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p></section>`;
+  }
+
+  if (data.experience?.some(e => e.company || e.role)) {
+    main += `<section class="resume-section"><h2>Experience</h2>`;
+    data.experience.forEach(exp => {
+      if (!exp.company && !exp.role) return;
+      main += `<div class="resume-item">
+        <h3>${escapeHtml(exp.role)}</h3>
+        <p class="resume-meta">${escapeHtml(exp.company)}${exp.location ? ' · ' + escapeHtml(exp.location) : ''} · ${escapeHtml(exp.start)}${exp.end ? ' – ' + escapeHtml(exp.end) : ''}</p>
+        <ul>${(exp.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      </div>`;
+    });
+    main += `</section>`;
+  }
+
+  if (data.projects?.some(p => p.name)) {
+    main += `<section class="resume-section"><h2>Projects</h2>`;
+    data.projects.forEach(proj => {
+      if (!proj.name) return;
+      main += `<div class="resume-item">
+        <h3>${escapeHtml(proj.name)}${proj.link ? ` — <a href="${escapeHtml(proj.link)}">${escapeHtml(proj.link)}</a>` : ''}</h3>
+        <ul>${(proj.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      </div>`;
+    });
+    main += `</section>`;
+  }
+
+  main += `</div>`;
+
+  return sidebar + main;
+}
+
+/* ============================================================
+   PUBLIC RENDER ENTRY POINT
+   ============================================================ */
+export function renderResumeHTML(data = resume) {
+  const tmpl = data.template || 'modern';
+  if (tmpl === 'twocolumn') return renderTwoColumnHTML(data);
+  return renderFlatHTML(data);
 }
 
 /* ============================================================
@@ -166,7 +278,8 @@ export function renderTemplateGallery() {
   }).join('');
 
   grid.querySelectorAll('.thumb-inner').forEach(inner => {
-    inner.innerHTML = renderResumeHTML(SAMPLE_RESUME);
+    const tmpl = inner.classList.contains('template-twocolumn') ? { ...SAMPLE_RESUME, template: 'twocolumn' } : SAMPLE_RESUME;
+    inner.innerHTML = renderResumeHTML(tmpl);
   });
 
   scaleThumbnails();
@@ -205,7 +318,8 @@ export function openTemplatePreview(name) {
 
   const meta = TEMPLATE_META[name];
   preview.className = `template-preview-inner preview-container template-${name}`;
-  preview.innerHTML = renderResumeHTML(SAMPLE_RESUME);
+  const sample = name === 'twocolumn' ? { ...SAMPLE_RESUME, template: 'twocolumn' } : SAMPLE_RESUME;
+  preview.innerHTML = renderResumeHTML(sample);
   nameEl.textContent = meta.name;
   descEl.textContent = meta.desc;
 
@@ -287,7 +401,7 @@ export function goToStep(n) {
     next.classList.toggle('hidden', currentStep === TOTAL_STEPS);
   }
 
-  document.querySelector('.editor')?.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 export function initStepper() {
@@ -597,7 +711,7 @@ function initSectionOrderDrag() {
 }
 
 /* ============================================================
-   EVENT DELEGATION (dynamic entries + drag)
+   EVENT DELEGATION
    ============================================================ */
 export function initUI() {
   const SECTION_MAP = {
@@ -820,6 +934,7 @@ let onAIApply = null;
 export function openAIDraftModal(text, target) {
   const modal = document.getElementById('aiModal');
   const draft = document.getElementById('aiDraft');
+  const applyBtn = document.getElementById('aiModalApply');
   if (!modal || !draft) return;
   draft.value = text;
   modal.classList.remove('hidden');
@@ -832,6 +947,8 @@ export function openAIDraftModal(text, target) {
       updatePreview();
     }
   };
+
+  return { modal, draft, applyBtn };
 }
 
 export function initAIModal() {
