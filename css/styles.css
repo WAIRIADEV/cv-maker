@@ -674,3 +674,101 @@ input, textarea, select { font-family: inherit; }
     width: 100% !important;
   }
 }
+/* ============================================================
+   DRAG HANDLES
+   ============================================================ */
+.entry-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.entry-card-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.entry-drag {
+  cursor: grab;
+  color: var(--text-soft);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  letter-spacing: -2px;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all var(--transition);
+}
+.entry-drag:hover { background: var(--surface-2); color: var(--text); }
+.entry-drag:active { cursor: grabbing; }
+
+.entry-card.dragging { opacity: 0.4; }
+.entry-card.drop-target {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* ============================================================
+   SECTION ORDER PANEL (step 7)
+   ============================================================ */
+.section-order-panel {
+  margin-top: 28px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.section-order-header h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.section-order-header p {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.section-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.section-order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+.section-order-item:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+.section-order-item:active { cursor: grabbing; }
+.section-order-item.dragging { opacity: 0.4; }
+.section-order-item.drop-target {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.section-order-handle {
+  color: var(--text-soft);
+  font-size: 14px;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.section-order-item span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}

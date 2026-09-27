@@ -30,6 +30,23 @@ export const TEMPLATE_META = {
   }
 };
 
+const DEFAULT_SECTION_ORDER = ['summary', 'experience', 'education', 'projects', 'skills'];
+const SECTION_LABELS = {
+  summary: 'Summary',
+  experience: 'Experience',
+  education: 'Education',
+  projects: 'Projects',
+  skills: 'Skills'
+};
+
+function normalizeSectionOrder(order) {
+  if (!Array.isArray(order) || !order.length) return [...DEFAULT_SECTION_ORDER];
+  const known = new Set(DEFAULT_SECTION_ORDER);
+  const filtered = order.filter(k => known.has(k));
+  const missing = DEFAULT_SECTION_ORDER.filter(k => !filtered.includes(k));
+  return [...filtered, ...missing];
+}
+
 export function switchView(view) {
   document.body.dataset.view = view;
   if (view === 'editor') {
@@ -52,6 +69,62 @@ export function applyTemplate(name) {
 /* ============================================================
    RESUME RENDERER (shared)
    ============================================================ */
+function renderSectionHTML(key, data) {
+  switch (key) {
+    case 'summary': {
+      if (!data.summary) return '';
+      return `<h2>Summary</h2><p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>`;
+    }
+    case 'experience': {
+      if (!data.experience?.some(e => e.company || e.role)) return '';
+      let h = '<h2>Experience</h2>';
+      data.experience.forEach(exp => {
+        if (!exp.company && !exp.role) return;
+        h += `<div style="margin-bottom:12px">
+          <h3>${escapeHtml(exp.role)}${exp.company ? ' — ' + escapeHtml(exp.company) : ''}</h3>
+          <p style="font-size:9.5pt; color:#64748b; margin-bottom:4px;">
+            ${escapeHtml(exp.start)}${exp.end ? ' – ' + escapeHtml(exp.end) : ''}${exp.location ? ' · ' + escapeHtml(exp.location) : ''}
+          </p>
+          <ul>${(exp.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </div>`;
+      });
+      return h;
+    }
+    case 'education': {
+      if (!data.education?.some(e => e.school || e.degree)) return '';
+      let h = '<h2>Education</h2>';
+      data.education.forEach(edu => {
+        if (!edu.school && !edu.degree) return;
+        h += `<div style="margin-bottom:8px">
+          <h3>${escapeHtml(edu.degree)}${edu.school ? ' — ' + escapeHtml(edu.school) : ''}</h3>
+          <p style="font-size:9.5pt; color:#64748b;">
+            ${escapeHtml(edu.start)}${edu.end ? ' – ' + escapeHtml(edu.end) : ''}${edu.location ? ' · ' + escapeHtml(edu.location) : ''}
+          </p>
+          ${edu.details ? `<p>${escapeHtml(edu.details)}</p>` : ''}
+        </div>`;
+      });
+      return h;
+    }
+    case 'projects': {
+      if (!data.projects?.some(p => p.name)) return '';
+      let h = '<h2>Projects</h2>';
+      data.projects.forEach(proj => {
+        if (!proj.name) return;
+        h += `<div style="margin-bottom:8px">
+          <h3>${escapeHtml(proj.name)}${proj.link ? ` — <a href="${escapeHtml(proj.link)}">${escapeHtml(proj.link)}</a>` : ''}</h3>
+          <ul>${(proj.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </div>`;
+      });
+      return h;
+    }
+    case 'skills': {
+      if (!data.skills) return '';
+      return `<h2>Skills</h2><p>${escapeHtml(data.skills).replace(/\n/g, '<br>')}</p>`;
+    }
+    default: return '';
+  }
+}
+
 export function renderResumeHTML(data = resume) {
   const contact = [data.email, data.phone, data.location, data.website, data.linkedin, data.github]
     .filter(Boolean).map(escapeHtml).join(' &nbsp;•&nbsp; ');
@@ -60,60 +133,18 @@ export function renderResumeHTML(data = resume) {
     <h1>${escapeHtml(data.name) || 'Your Name'}</h1>
     <p style="font-size:12pt; color:#475569; margin-bottom:2px;">${escapeHtml(data.title) || 'Job Title'}</p>
     <p style="font-size:9.5pt; color:#64748b; margin-bottom:14px;">${contact}</p>
-    ${data.summary ? `<h2>Summary</h2><p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>` : ''}
   `;
 
-  if (data.experience?.some(e => e.company || e.role)) {
-    html += `<h2>Experience</h2>`;
-    data.experience.forEach(exp => {
-      if (!exp.company && !exp.role) return;
-      html += `<div style="margin-bottom:12px">
-        <h3>${escapeHtml(exp.role)}${exp.company ? ' — ' + escapeHtml(exp.company) : ''}</h3>
-        <p style="font-size:9.5pt; color:#64748b; margin-bottom:4px;">
-          ${escapeHtml(exp.start)}${exp.end ? ' – ' + escapeHtml(exp.end) : ''}${exp.location ? ' · ' + escapeHtml(exp.location) : ''}
-        </p>
-        <ul>${(exp.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
-      </div>`;
-    });
-  }
-
-  if (data.education?.some(e => e.school || e.degree)) {
-    html += `<h2>Education</h2>`;
-    data.education.forEach(edu => {
-      if (!edu.school && !edu.degree) return;
-      html += `<div style="margin-bottom:8px">
-        <h3>${escapeHtml(edu.degree)}${edu.school ? ' — ' + escapeHtml(edu.school) : ''}</h3>
-        <p style="font-size:9.5pt; color:#64748b;">
-          ${escapeHtml(edu.start)}${edu.end ? ' – ' + escapeHtml(edu.end) : ''}${edu.location ? ' · ' + escapeHtml(edu.location) : ''}
-        </p>
-        ${edu.details ? `<p>${escapeHtml(edu.details)}</p>` : ''}
-      </div>`;
-    });
-  }
-
-  if (data.projects?.some(p => p.name)) {
-    html += `<h2>Projects</h2>`;
-    data.projects.forEach(proj => {
-      if (!proj.name) return;
-      html += `<div style="margin-bottom:8px">
-        <h3>${escapeHtml(proj.name)}${proj.link ? ` — <a href="${escapeHtml(proj.link)}">${escapeHtml(proj.link)}</a>` : ''}</h3>
-        <ul>${(proj.bullets || []).filter(b => b.trim()).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
-      </div>`;
-    });
-  }
-
-  if (data.skills) {
-    html += `<h2>Skills</h2><p>${escapeHtml(data.skills).replace(/\n/g, '<br>')}</p>`;
-  }
-
+  const order = normalizeSectionOrder(data.sectionOrder);
+  order.forEach(key => { html += renderSectionHTML(key, data); });
   return html;
 }
 
 /* ============================================================
    TEMPLATE GALLERY
    ============================================================ */
-const BASE_WIDTH = 816; // 8.5in at 96dpi
-const BASE_HEIGHT = 1056; // 11in at 96dpi
+const BASE_WIDTH = 816;
+const BASE_HEIGHT = 1056;
 
 export function renderTemplateGallery() {
   const grid = document.getElementById('templateGrid');
@@ -132,7 +163,6 @@ export function renderTemplateGallery() {
     `;
   }).join('');
 
-  // Fill thumbnails with sample content
   grid.querySelectorAll('.thumb-inner').forEach(inner => {
     inner.innerHTML = renderResumeHTML(SAMPLE_RESUME);
   });
@@ -178,7 +208,6 @@ export function openTemplatePreview(name) {
   descEl.textContent = meta.desc;
 
   modal.classList.remove('hidden');
-  // Scale after the modal is visible so clientWidth is correct
   requestAnimationFrame(scaleModalPreview);
 }
 
@@ -276,6 +305,19 @@ export function closePreview() {
 }
 
 /* ============================================================
+   ENTRY CARD TEMPLATE HELPERS
+   ============================================================ */
+function entryCardHeader(label, index, section) {
+  return `
+    <div class="entry-card-header">
+      <div class="entry-drag" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</div>
+      <span class="entry-card-title">${escapeHtml(label)}</span>
+      <button type="button" class="entry-remove" data-action="remove" data-section="${section}" data-index="${index}">Remove</button>
+    </div>
+  `;
+}
+
+/* ============================================================
    EXPERIENCE
    ============================================================ */
 export function renderExperience() {
@@ -293,10 +335,7 @@ export function renderExperience() {
 
   container.innerHTML = resume.experience.map((exp, i) => `
     <div class="entry-card" data-index="${i}">
-      <div class="entry-card-header">
-        <span class="entry-card-title">Experience ${i + 1}</span>
-        <button type="button" class="entry-remove" data-action="remove" data-section="experience" data-index="${i}">Remove</button>
-      </div>
+      ${entryCardHeader(`Experience ${i + 1}`, i, 'experience')}
       <div class="entry-row">
         <input data-field="role" value="${escapeHtml(exp.role)}" placeholder="Role (e.g. Senior Designer)" />
         <input data-field="company" value="${escapeHtml(exp.company)}" placeholder="Company" />
@@ -347,10 +386,7 @@ export function renderEducation() {
 
   container.innerHTML = resume.education.map((edu, i) => `
     <div class="entry-card" data-index="${i}">
-      <div class="entry-card-header">
-        <span class="entry-card-title">Education ${i + 1}</span>
-        <button type="button" class="entry-remove" data-action="remove" data-section="education" data-index="${i}">Remove</button>
-      </div>
+      ${entryCardHeader(`Education ${i + 1}`, i, 'education')}
       <div class="entry-row">
         <input data-field="degree" value="${escapeHtml(edu.degree)}" placeholder="Degree (e.g. BSc Computer Science)" />
         <input data-field="school" value="${escapeHtml(edu.school)}" placeholder="School / University" />
@@ -395,10 +431,7 @@ export function renderProjects() {
 
   container.innerHTML = resume.projects.map((proj, i) => `
     <div class="entry-card" data-index="${i}">
-      <div class="entry-card-header">
-        <span class="entry-card-title">Project ${i + 1}</span>
-        <button type="button" class="entry-remove" data-action="remove" data-section="projects" data-index="${i}">Remove</button>
-      </div>
+      ${entryCardHeader(`Project ${i + 1}`, i, 'projects')}
       <div class="entry-row">
         <input data-field="name" value="${escapeHtml(proj.name)}" placeholder="Project name" />
         <input data-field="link" value="${escapeHtml(proj.link)}" placeholder="Link (optional)" />
@@ -466,33 +499,112 @@ export function bindTopLevelInputs() {
 }
 
 /* ============================================================
-   EVENT DELEGATION
+   SECTION ORDER (step 7)
+   ============================================================ */
+export function renderSectionOrder() {
+  const list = document.getElementById('sectionOrderList');
+  if (!list) return;
+
+  resume.sectionOrder = normalizeSectionOrder(resume.sectionOrder);
+
+  list.innerHTML = resume.sectionOrder.map((key, i) => `
+    <div class="section-order-item" data-section-key="${key}" data-index="${i}" draggable="true">
+      <div class="section-order-handle">⋮⋮</div>
+      <span>${escapeHtml(SECTION_LABELS[key] || key)}</span>
+    </div>
+  `).join('');
+}
+
+function initSectionOrderDrag() {
+  const list = document.getElementById('sectionOrderList');
+  if (!list) return;
+
+  let draggingKey = null;
+
+  list.addEventListener('dragstart', e => {
+    const item = e.target.closest('.section-order-item');
+    if (!item) return;
+    draggingKey = item.dataset.sectionKey;
+    item.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggingKey);
+  });
+
+  list.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const over = e.target.closest('.section-order-item');
+    if (!over) return;
+    list.querySelectorAll('.section-order-item').forEach(i => {
+      i.classList.toggle('drop-target', i === over && i.dataset.sectionKey !== draggingKey);
+    });
+  });
+
+  list.addEventListener('dragleave', e => {
+    if (!list.contains(e.relatedTarget)) {
+      list.querySelectorAll('.section-order-item').forEach(i => i.classList.remove('drop-target'));
+    }
+  });
+
+  list.addEventListener('drop', e => {
+    e.preventDefault();
+    const target = e.target.closest('.section-order-item');
+    if (!target || !draggingKey) return;
+    const targetKey = target.dataset.sectionKey;
+    if (targetKey === draggingKey) return;
+
+    const order = [...resume.sectionOrder];
+    const fromIdx = order.indexOf(draggingKey);
+    const toIdx = order.indexOf(targetKey);
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, draggingKey);
+    resume.sectionOrder = order;
+
+    draggingKey = null;
+    renderSectionOrder();
+    updatePreview();
+  });
+
+  list.addEventListener('dragend', () => {
+    draggingKey = null;
+    list.querySelectorAll('.section-order-item').forEach(i => {
+      i.classList.remove('dragging', 'drop-target');
+    });
+  });
+}
+
+/* ============================================================
+   EVENT DELEGATION (dynamic entries + drag)
    ============================================================ */
 export function initUI() {
-  ['experienceList', 'educationList', 'projectList'].forEach(id => {
+  const SECTION_MAP = {
+    experienceList: { key: 'experience', collection: () => resume.experience, rerender: renderExperience },
+    educationList:  { key: 'education',  collection: () => resume.education,  rerender: renderEducation },
+    projectList:    { key: 'projects',   collection: () => resume.projects,   rerender: renderProjects }
+  };
+
+  Object.keys(SECTION_MAP).forEach(id => {
     const container = document.getElementById(id);
     if (!container) return;
+    const { collection, rerender } = SECTION_MAP[id];
 
+    // ---- input events ----
     container.addEventListener('input', e => {
       const wrapper = e.target.closest('[data-index]');
       if (!wrapper) return;
       const index = Number(wrapper.dataset.index);
       const field = e.target.dataset.field;
       if (!field) return;
-
-      const collection =
-        id === 'experienceList' ? resume.experience :
-        id === 'educationList'  ? resume.education :
-                                  resume.projects;
-
-      const entry = collection[index];
+      const entry = collection()[index];
       if (!entry) return;
-
       if (field === 'bullets') entry.bullets = e.target.value.split('\n');
       else entry[field] = e.target.value;
       updatePreview();
     });
 
+    // ---- remove ----
     container.addEventListener('click', e => {
       const btn = e.target.closest('[data-action="remove"]');
       if (!btn) return;
@@ -502,7 +614,62 @@ export function initUI() {
       if (section === 'education')  removeEducation(index);
       if (section === 'projects')   removeProject(index);
     });
+
+    // ---- drag-to-reorder entries ----
+    let draggingIndex = null;
+    container.addEventListener('dragstart', e => {
+      const card = e.target.closest('.entry-card');
+      const handle = e.target.closest('.entry-drag');
+      if (!card || !handle) return;
+      draggingIndex = Number(card.dataset.index);
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(draggingIndex));
+    });
+
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const over = e.target.closest('.entry-card');
+      if (!over) return;
+      const overIdx = Number(over.dataset.index);
+      container.querySelectorAll('.entry-card').forEach(c => {
+        c.classList.toggle('drop-target', c === over && overIdx !== draggingIndex);
+      });
+    });
+
+    container.addEventListener('dragleave', e => {
+      if (!container.contains(e.relatedTarget)) {
+        container.querySelectorAll('.entry-card').forEach(c => c.classList.remove('drop-target'));
+      }
+    });
+
+    container.addEventListener('drop', e => {
+      e.preventDefault();
+      const over = e.target.closest('.entry-card');
+      if (!over || draggingIndex === null) return;
+      const targetIndex = Number(over.dataset.index);
+      if (targetIndex === draggingIndex) return;
+
+      const arr = collection();
+      const [moved] = arr.splice(draggingIndex, 1);
+      arr.splice(targetIndex, 0, moved);
+
+      draggingIndex = null;
+      rerender();
+      updatePreview();
+    });
+
+    container.addEventListener('dragend', () => {
+      draggingIndex = null;
+      container.querySelectorAll('.entry-card').forEach(c => {
+        c.classList.remove('dragging', 'drop-target');
+      });
+    });
   });
+
+  // Section order drag
+  initSectionOrderDrag();
 }
 
 /* ============================================================

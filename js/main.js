@@ -6,7 +6,8 @@ import {
   initAIModal, initStepper, togglePreview, closePreview,
   switchView, applyTemplate,
   renderTemplateGallery, scaleThumbnails,
-  openTemplatePreview, initTemplateModal
+  openTemplatePreview, initTemplateModal,
+  renderSectionOrder
 } from './ui.js';
 import { aiGenerateSummary, aiImproveBullets, aiTailor } from './ai.js';
 
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   populateInputs();
   bindTopLevelInputs();
   renderAll();
+  renderSectionOrder();
   updatePreview();
   initUI();
   initAIModal();
@@ -45,14 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTemplate(resume.template || 'modern');
   switchView('gallery');
 
-  // Click a card → open template preview modal
   document.getElementById('templateGrid')?.addEventListener('click', e => {
     const card = e.target.closest('.template-card');
     if (!card) return;
     openTemplatePreview(card.dataset.template);
   });
 
-  // Rescale thumbnails and modal preview on resize
   window.addEventListener('resize', () => {
     scaleThumbnails();
     const modal = document.getElementById('templateModal');
@@ -65,13 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Continue editing CTA
   document.getElementById('continueBtn')?.addEventListener('click', () => {
     applyTemplate(resume.template || 'modern');
     switchView('editor');
   });
 
-  // Brand → back to gallery
   document.getElementById('brandHome')?.addEventListener('click', () => {
     switchView('gallery');
   });
@@ -109,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearResumeStorage();
       populateInputs();
       renderAll();
+      renderSectionOrder();
       updatePreview();
     }
   });

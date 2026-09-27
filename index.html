@@ -181,30 +181,38 @@
         </div>
 
         <div class="page" data-page="7">
-          <header class="page-header">
-            <h2>Tailor & Export</h2>
-            <p>Paste a job description to see how well your resume matches.</p>
-          </header>
-          <label class="field">
-            <span>Job Description</span>
-            <textarea id="jobDescription" rows="8" class="textarea" placeholder="Paste the full job posting here..."></textarea>
-          </label>
-          <button id="aiTailorBtn" class="btn btn-ai btn-block" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            Analyze Match
-          </button>
-          <div id="aiOutput" class="ai-output hidden"></div>
+  <header class="page-header">
+    <h2>Tailor & Export</h2>
+    <p>Paste a job description to see how well your resume matches.</p>
+  </header>
+  <label class="field">
+    <span>Job Description</span>
+    <textarea id="jobDescription" rows="8" class="textarea" placeholder="Paste the full job posting here..."></textarea>
+  </label>
+  <button id="aiTailorBtn" class="btn btn-ai btn-block" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    Analyze Match
+  </button>
+  <div id="aiOutput" class="ai-output hidden"></div>
 
-          <div class="export-cta">
-            <h3>Ready to send it?</h3>
-            <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
-            <button id="exportBtn2" class="btn btn-primary btn-lg btn-block" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export as PDF
-            </button>
-          </div>
-        </div>
+  <!-- NEW: Section Order panel -->
+  <section class="section-order-panel">
+    <div class="section-order-header">
+      <h3>Section Order</h3>
+      <p>Drag to change how sections appear in your resume.</p>
+    </div>
+    <div class="section-order-list" id="sectionOrderList"></div>
+  </section>
 
+  <div class="export-cta">
+    <h3>Ready to send it?</h3>
+    <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
+    <button id="exportBtn2" class="btn btn-primary btn-lg btn-block" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export as PDF
+    </button>
+  </div>
+</div>
         <footer class="page-footer">
           <button id="prevBtn" class="btn btn-secondary" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
