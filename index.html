@@ -208,7 +208,6 @@
             <textarea id="jobDescription" rows="7" class="textarea" placeholder="Paste the full job posting here..."></textarea>
           </label>
 
-          <!-- Mode toggle -->
           <div class="ats-mode-toggle" role="tablist" aria-label="Scan mode">
             <button class="ats-mode-btn active" data-mode="fast" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -233,7 +232,6 @@
             </button>
           </div>
 
-          <!-- Progress indicator for semantic scan -->
           <div id="atsProgress" class="ats-progress hidden">
             <div class="ats-progress-bar"><div class="ats-progress-fill" id="atsProgressFill"></div></div>
             <div class="ats-progress-text" id="atsProgressText">Preparing…</div>
@@ -273,6 +271,9 @@
           </button>
         </footer>
       </section>
+
+      <!-- Resizer -->
+      <div class="workspace-resizer" id="workspaceResizer" title="Drag to resize · double-click to reset" aria-hidden="true"></div>
 
       <!-- Preview panel -->
       <aside class="preview-panel" id="previewPanel">

@@ -28,6 +28,8 @@
   --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
   --header-h: 60px;
   --stepper-h: 80px;
+  --preview-width: 460px;
+  --resizer-w: 6px;
 }
 
 /* ============================================================
@@ -310,12 +312,57 @@ input, textarea, select { font-family: inherit; }
 .mobile-progress { display: none; text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; font-weight: 500; }
 
 /* ============================================================
-   MAIN LAYOUT — page scrolls, preview sticks
+   MAIN LAYOUT — 3 columns: editor | resizer | preview
    ============================================================ */
 .app-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+  grid-template-columns: minmax(0, 1fr) var(--resizer-w) minmax(0, var(--preview-width));
   align-items: start;
+}
+
+/* ============================================================
+   RESIZER
+   ============================================================ */
+.workspace-resizer {
+  position: relative;
+  align-self: stretch;
+  cursor: col-resize;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 5;
+  transition: background 150ms ease;
+}
+.workspace-resizer::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 44px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.workspace-resizer:hover,
+.workspace-resizer:focus-visible {
+  background: var(--primary-soft);
+  outline: none;
+}
+.workspace-resizer:hover::before,
+.workspace-resizer:focus-visible::before,
+.workspace-resizer.dragging::before {
+  opacity: 1;
+  background: var(--primary);
+}
+
+/* While dragging, lock the cursor globally */
+body.resizing,
+body.resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 /* ============================================================
@@ -559,6 +606,7 @@ input, textarea, select { font-family: inherit; }
   padding: 24px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .preview-panel::-webkit-scrollbar { width: 10px; }
 .preview-panel::-webkit-scrollbar-thumb {
@@ -658,13 +706,13 @@ input, textarea, select { font-family: inherit; }
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1100px) {
-  .app-main { grid-template-columns: minmax(0, 1fr) 380px; }
   .editor { padding: 24px 28px 80px; }
 }
 
 @media (max-width: 900px) {
   .preview-toggle { display: flex; }
   .app-main { grid-template-columns: 1fr; }
+  .workspace-resizer { display: none; }
 
   .preview-panel {
     position: fixed;
@@ -1140,9 +1188,6 @@ input, textarea, select { font-family: inherit; }
 /* ============================================================
    PRINT
    ============================================================ */
-/* Removes browser's default print margins so the resume
-   content area fills the page and the URL/page-number
-   header/footer has no room to render. */
 @page {
   size: letter;
   margin: 0;
@@ -1159,6 +1204,7 @@ input, textarea, select { font-family: inherit; }
   }
   .no-print { display: none !important; }
   .app-main { display: block !important; overflow: visible !important; }
+  .workspace-resizer { display: none !important; }
   .preview-panel {
     position: static !important;
     transform: none !important;

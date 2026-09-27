@@ -15,6 +15,7 @@ import { analyzeResume } from './ats.js';
 import { semanticScan, clearEmbeddingCache } from './semantic.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { showToast, confirmDialog } from './toast.js';
+import { initResizer } from './resizer.js';
 
 const SETTINGS_KEY = 'cv-maker-settings';
 let currentAtsMode = 'fast';
@@ -120,6 +121,7 @@ function hideProgress() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initResizer();
 
   loadResumeFromStorage();
   populateInputs();
@@ -164,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Semantic mode
     const original = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = 'Scanning…';
