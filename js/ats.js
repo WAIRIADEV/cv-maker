@@ -1,6 +1,5 @@
 // js/ats.js
 // Local keyword extraction + ATS match scoring. No AI required.
-import { scoreTier } from './ats.js';
 
 const STOPWORDS = new Set([
   'a','an','and','or','but','the','of','to','in','on','at','by','for','with','from',
@@ -41,10 +40,6 @@ function normalize(text) {
     .trim();
 }
 
-/**
- * Extract weighted keywords from a job description.
- * Returns array of { term, weight, count, isPhrase }
- */
 export function extractKeywords(text) {
   const clean = normalize(text);
   if (!clean) return [];
@@ -73,7 +68,6 @@ export function extractKeywords(text) {
     keywords.push({ term, weight, count, isPhrase });
   }
 
-  // Dedupe + sort by weight
   return keywords
     .sort((a, b) => b.weight - a.weight)
     .filter((k, i, arr) => arr.findIndex(x => x.term === k.term) === i)
@@ -92,10 +86,6 @@ function getResumeText(r) {
   return normalize(parts.filter(Boolean).join(' '));
 }
 
-/**
- * Compute ATS match score between a JD and a resume.
- * Returns { score, matched, missing, total, highPriorityMissing }
- */
 export function analyzeResume(jdText, resumeData) {
   const keywords = extractKeywords(jdText);
   if (!keywords.length) {
