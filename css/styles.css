@@ -527,7 +527,7 @@ input, textarea, select { font-family: inherit; }
 .export-cta p { margin: 0 0 16px; color: var(--text-muted); font-size: 13px; line-height: 1.5; }
 
 /* ============================================================
-   PAGE FOOTER NAV — normal flow (was sticky)
+   PAGE FOOTER NAV — normal flow
    ============================================================ */
 .page-footer {
   margin-top: 40px;
@@ -1140,8 +1140,23 @@ input, textarea, select { font-family: inherit; }
 /* ============================================================
    PRINT
    ============================================================ */
+/* Removes browser's default print margins so the resume
+   content area fills the page and the URL/page-number
+   header/footer has no room to render. */
+@page {
+  size: letter;
+  margin: 0;
+}
+
 @media print {
-  html, body { overflow: visible !important; height: auto !important; display: block !important; background: white !important; }
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
   .no-print { display: none !important; }
   .app-main { display: block !important; overflow: visible !important; }
   .preview-panel {
@@ -1156,7 +1171,7 @@ input, textarea, select { font-family: inherit; }
     overflow: visible !important;
   }
   .preview-container {
-    padding: 0 !important;
+    padding: 0.6in 0.55in !important;
     margin: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
