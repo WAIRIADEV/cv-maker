@@ -2,70 +2,26 @@ import { resume } from './state.js';
 import { renderExperience, updatePreview, openAIDraftModal } from './ui.js';
 import { sanitizeAIOutput } from './utils.js';
 import { showToast } from './toast.js';
+import { callAI } from './ai-call.js';
+import {
+  loadChat,
+  saveChat,
+  clearChat,
+  getMessages,
+  addUserMessage,
+  addAssistantMessage,
+  updateLastAssistant,
+  buildRequestMessages
+} from './chat.js';
 
-/* ============================================================
-   OLLAMA CALL WITH STREAMING
-   ============================================================
-   Speed wins over a plain call:
-   - stream: true         → tokens render as generated
-   - keep_alive: '30m'    → model stays in RAM between calls
-   - num_predict          → caps runaway output
-   - temperature: 0.6     → slightly tighter responses
-   - compactPrompt()      → ~60% shorter prompts
-   ============================================================ */
+const STRICT_FORMAT = `
+Output rules (follow exactly):
+- Plain text only. NO markdown: no asterisks, no underscores, no backticks, no headers, no bullet symbols.
+- Do NOT include a preamble like "Here is..." or a closing like "Let me know...".
+- Do NOT explain what you are doing. Just return the content itself.
+- Use short paragraphs separated by a blank line.
+`.trim();
 
-async function callOllama(prompt, { onToken, numPredict = 300 } = {}) {
-  const url   = document.getElementById('ollamaUrl').value.replace(/\/$/, '');
-  const model = document.getElementById('ollamaModel').value;
-
-  const response = await fetch(`${url}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      prompt,
-      stream: true,
-      keep_alive: '30m',
-      options: {
-        num_predict: numPredict,
-        temperature: 0.6,
-        top_p: 0.9
-      }
-    })
-  });
-
-  if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
-  if (!response.body) throw new Error('No response body from Ollama.');
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let full = '';
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      try {
-        const obj = JSON.parse(line);
-        if (obj.response) {
-          full += obj.response;
-          onToken?.(obj.response, full);
-        }
-      } catch { /* ignore partial lines */ }
-    }
-  }
-  return full;
-}
-
-/* ============================================================
-   COMPACT PROMPT PAYLOAD
-   Only send what the AI actually needs.
-   ============================================================ */
 function compactResume(r) {
   return {
     name: r.name,
@@ -88,22 +44,13 @@ function compactResume(r) {
   };
 }
 
-const STRICT_FORMAT = `
-Output rules (follow exactly):
-- Plain text only. NO markdown: no asterisks, no underscores, no backticks, no headers, no bullet symbols.
-- Do NOT include a preamble like "Here is..." or a closing like "Let me know...".
-- Do NOT explain what you are doing. Just return the content itself.
-- Use short paragraphs separated by a blank line.
-`.trim();
-
 /* ============================================================
-   SUMMARY — streams live into the review modal
+   SUMMARY — streams live into review modal
    ============================================================ */
 export async function aiGenerateSummary(btn) {
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Generating...';
 
-  // Open modal immediately with empty textarea + disabled Apply
   const { draft, applyBtn } = openAIDraftModal('', 'summary') || {};
   if (applyBtn) {
     applyBtn.disabled = true;
@@ -126,19 +73,16 @@ Target title: ${resume.title || 'professional'}
 Experience:
 ${expText}`;
 
-    let streamed = '';
-    const raw = await callOllama(prompt, {
-      numPredict: 220,
-      onToken: (_, full) => {
-        streamed = full;
-        if (draft) draft.value = full;
-      }
+    const raw = await callAI({
+      prompt,
+      maxTokens: 220,
+      onToken: (_, full) => { if (draft) draft.value = full; }
     });
 
-    // Final sanitize
     if (draft) draft.value = sanitizeAIOutput(raw);
   } catch (e) {
     showToast('AI error: ' + e.message, 'error', 5000);
+    document.getElementById('aiModal')?.classList.add('hidden');
   } finally {
     btn.disabled = false; btn.textContent = original;
     if (applyBtn) {
@@ -149,7 +93,7 @@ ${expText}`;
 }
 
 /* ============================================================
-   BULLETS — waits for full output, then sanitizes
+   BULLETS
    ============================================================ */
 export async function aiImproveBullets(index, btn) {
   const exp = resume.experience[index];
@@ -168,11 +112,8 @@ ${STRICT_FORMAT}
 Bullets:
 ${current}`;
 
-    const raw = await callOllama(prompt, { numPredict: 250 });
-    const cleaned = sanitizeAIOutput(raw)
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean);
+    const raw = await callAI({ prompt, maxTokens: 250, stream: true });
+    const cleaned = sanitizeAIOutput(raw).split('\n').map(l => l.trim()).filter(Boolean);
 
     exp.bullets = cleaned;
     renderExperience();
@@ -185,7 +126,7 @@ ${current}`;
 }
 
 /* ============================================================
-   DEEP ANALYSIS — streams live into #aiOutput
+   DEEP ANALYSIS — streams into #aiOutput
    ============================================================ */
 export async function aiDeepAnalysis(btn) {
   const jd = document.getElementById('jobDescription')?.value || '';
@@ -200,7 +141,6 @@ export async function aiDeepAnalysis(btn) {
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Analyzing...';
   try {
-    const compact = compactResume(resume);
     const prompt = `You are an expert career coach and ATS specialist.
 The candidate's resume and the target job description are below.
 
@@ -213,19 +153,17 @@ Give specific, actionable advice in this exact structure (plain text, no markdow
 Keep it under 220 words total. Do not use markdown formatting.
 
 Resume (JSON):
-${JSON.stringify(compact)}
+${JSON.stringify(compactResume(resume))}
 
 Job Description:
 ${jd}`;
 
-    const raw = await callOllama(prompt, {
-      numPredict: 380,
-      onToken: (_, full) => {
-        if (output) output.textContent = full;
-      }
+    const raw = await callAI({
+      prompt,
+      maxTokens: 380,
+      onToken: (_, full) => { if (output) output.textContent = full; }
     });
 
-    // Final sanitize pass
     if (output) output.textContent = sanitizeAIOutput(raw);
   } catch (e) {
     showToast('AI error: ' + e.message, 'error', 5000);
@@ -233,4 +171,98 @@ ${jd}`;
   } finally {
     btn.disabled = false; btn.textContent = original;
   }
+}
+
+/* ============================================================
+   CHAT — active context window
+   ============================================================ */
+let chatSending = false;
+
+export async function chatSend(text) {
+  if (chatSending) return;
+  const trimmed = (text || '').trim();
+  if (!trimmed) return;
+
+  chatSending = true;
+  addUserMessage(trimmed);
+  renderChatMessages();
+
+  // Add a placeholder assistant message that will stream into
+  addAssistantMessage('');
+  const assistantIndex = getMessages().length - 1;
+
+  try {
+    const requestMessages = buildRequestMessages();
+
+    await callAI({
+      messages: requestMessages,
+      maxTokens: 500,
+      stream: true,
+      onToken: (_, full) => {
+        updateLastAssistant(full);
+        renderChatMessages();
+      }
+    });
+
+    // Final sanitize
+    const final = sanitizeAIOutput(getMessages()[assistantIndex].content);
+    updateLastAssistant(final);
+    renderChatMessages();
+  } catch (e) {
+    updateLastAssistant(`[Error: ${e.message}]`);
+    renderChatMessages();
+    showToast('Chat error: ' + e.message, 'error', 5000);
+  } finally {
+    chatSending = false;
+  }
+}
+
+export function chatClear() {
+  clearChat();
+  renderChatMessages();
+}
+
+export function initChat() {
+  loadChat();
+  renderChatMessages();
+}
+
+/* ============================================================
+   CHAT RENDERING
+   ============================================================ */
+export function renderChatMessages() {
+  const container = document.getElementById('chatMessages');
+  if (!container) return;
+
+  const msgs = getMessages();
+  if (!msgs.length) {
+    container.innerHTML = `
+      <div class="chat-empty">
+        <p>Ask anything about your resume.</p>
+        <div class="chat-suggestions">
+          <button type="button" class="chat-suggestion" data-suggest="Make my summary shorter and punchier.">Shorten my summary</button>
+          <button type="button" class="chat-suggestion" data-suggest="Add more quantifiable metrics to my experience bullets.">Add metrics</button>
+          <button type="button" class="chat-suggestion" data-suggest="Rewrite my summary in a more formal tone.">More formal tone</button>
+          <button type="button" class="chat-suggestion" data-suggest="What are my weakest bullet points and why?">Find weak spots</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = msgs.map((m, i) => `
+    <div class="chat-msg chat-msg-${m.role}" data-index="${i}">
+      <div class="chat-msg-role">${m.role === 'user' ? 'You' : 'AI'}</div>
+      <div class="chat-msg-body">${escapeHtml(m.content) || '<span class="chat-typing">…</span>'}</div>
+    </div>
+  `).join('');
+
+  // Auto-scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[m]));
 }

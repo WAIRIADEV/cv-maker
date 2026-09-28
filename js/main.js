@@ -10,37 +10,149 @@ import {
   renderSectionOrder,
   renderATSResults, clearATSResults
 } from './ui.js';
-import { aiGenerateSummary, aiImproveBullets, aiDeepAnalysis } from './ai.js';
+import {
+  aiGenerateSummary, aiImproveBullets, aiDeepAnalysis,
+  chatSend, chatClear, initChat
+} from './ai.js';
 import { analyzeResume } from './ats.js';
 import { semanticScan, clearEmbeddingCache } from './semantic.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { showToast, confirmDialog } from './toast.js';
 import { initResizer } from './resizer.js';
+import { PROVIDERS, getProvider } from './providers.js';
+
+// Expose providers so ai-call.js can resolve the active one
+window.__PROVIDERS__ = PROVIDERS;
 
 const SETTINGS_KEY = 'cv-maker-settings';
 let currentAtsMode = 'fast';
 
 /* ============================================================
-   SETTINGS
+   SETTINGS - PER-PROVIDER STORAGE
+   Shape:
+   {
+     provider: 'ollama' | 'groq' | 'deepseek',
+     url: 'http://localhost:11434',
+     embedModel: 'nomic-embed-text',
+     atsMode: 'fast' | 'semantic',
+     models:  { ollama: 'llama3.2:latest', groq: 'openai/gpt-oss-120b', ... },
+     apiKeys: { groq: 'gsk_...', deepseek: 'sk-...' }
+   }
    ============================================================ */
-function loadSettings() {
+function readSettings() {
   try {
-    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-    if (s.url)        document.getElementById('ollamaUrl').value  = s.url;
-    if (s.model)      document.getElementById('ollamaModel').value = s.model;
-    if (s.embedModel) document.getElementById('embedModel').value  = s.embedModel;
-    if (s.atsMode)    currentAtsMode = s.atsMode;
-  } catch { /* ignore */ }
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function loadSettings() {
+  const s = readSettings();
+  const provider = getProvider(s.provider || 'ollama');
+
+  document.getElementById('providerSelect').value = provider.id;
+
+  // Global (non-provider-specific) fields
+  if (s.url)        document.getElementById('ollamaUrl').value  = s.url;
+  if (s.embedModel) document.getElementById('embedModel').value = s.embedModel;
+  if (s.atsMode)    currentAtsMode = s.atsMode;
+
+  applyProviderUI(provider);
+}
+
+function applyProviderUI(provider) {
+  const isOllama = provider.format === 'ollama';
+
+  // Show/hide provider-specific fields
+  document.getElementById('apiKeyField').style.display     = isOllama ? 'none' : 'block';
+  document.getElementById('ollamaUrlField').style.display  = isOllama ? 'block' : 'none';
+  document.getElementById('embedModelField').style.display = isOllama ? 'block' : 'none';
+  document.getElementById('providerHint').textContent      = provider.hint;
+
+  // Refresh model suggestions datalist
+  const datalist = document.getElementById('modelSuggestions');
+  datalist.innerHTML = '';
+  (provider.suggestedModels || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    datalist.appendChild(opt);
+  });
+
+  // Load this provider's saved model (per-provider), else its default
+  const s = readSettings();
+  const modelInput = document.getElementById('ollamaModel');
+  modelInput.value = s.models?.[provider.id] || provider.defaultModel;
+
+  // Load this provider's saved API key (per-provider)
+  const keyInput = document.getElementById('apiKey');
+  if (keyInput) keyInput.value = s.apiKeys?.[provider.id] || '';
+
+  // Semantic mode toggle
+  const semanticBtn = document.querySelector('.ats-mode-btn[data-mode="semantic"]');
+  if (semanticBtn) {
+    semanticBtn.disabled = !provider.hasEmbeddings;
+    semanticBtn.title = provider.hasEmbeddings ? '' : 'Semantic mode requires Ollama embeddings.';
+    if (!provider.hasEmbeddings && currentAtsMode === 'semantic') {
+      setAtsMode('fast');
+    }
+  }
+
+  // Show/hide the refresh-models button
+  const refreshBtn = document.getElementById('refreshModelsBtn');
+  if (refreshBtn) {
+    refreshBtn.style.display = provider.modelsPath ? 'inline-flex' : 'none';
+  }
 }
 
 function saveSettings() {
+  const existing = readSettings();
+  const providerId = document.getElementById('providerSelect').value;
+
   const s = {
+    ...existing,
+    provider:   providerId,
     url:        document.getElementById('ollamaUrl').value,
-    model:      document.getElementById('ollamaModel').value,
     embedModel: document.getElementById('embedModel').value,
-    atsMode:    currentAtsMode
+    atsMode:    currentAtsMode,
+    models: {
+      ...(existing.models || {}),
+      [providerId]: document.getElementById('ollamaModel').value
+    },
+    apiKeys: {
+      ...(existing.apiKeys || {}),
+      [providerId]: document.getElementById('apiKey').value
+    }
   };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+function getProviderKey(providerId) {
+  return readSettings().apiKeys?.[providerId] || '';
+}
+
+/* ============================================================
+   ATS MODE + PROGRESS
+   ============================================================ */
+function setAtsMode(mode) {
+  currentAtsMode = mode;
+  document.querySelectorAll('.ats-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  saveSettings();
+}
+
+function showProgress(text, pct) {
+  const wrap = document.getElementById('atsProgress');
+  const fill = document.getElementById('atsProgressFill');
+  const txt  = document.getElementById('atsProgressText');
+  if (!wrap || !fill || !txt) return;
+  wrap.classList.remove('hidden');
+  fill.style.width = `${pct}%`;
+  txt.textContent = text;
+}
+function hideProgress() {
+  document.getElementById('atsProgress')?.classList.add('hidden');
 }
 
 /* ============================================================
@@ -70,20 +182,18 @@ function importJSON() {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      if (typeof data !== 'object' || data === null) {
-        throw new Error('File does not contain a valid resume object.');
-      }
+      if (typeof data !== 'object' || data === null) throw new Error('Invalid file.');
       setResume(data);
       populateInputs();
       renderAll();
       renderSectionOrder();
       applyTemplate(resume.template || 'modern');
       clearATSResults();
-      const jdField = document.getElementById('jobDescription');
-      if (jdField) jdField.value = resume.jobDescription || '';
+      const jd = document.getElementById('jobDescription');
+      if (jd) jd.value = resume.jobDescription || '';
       updatePreview();
       saveResume();
-      showToast('Resume imported successfully', 'success');
+      showToast('Resume imported', 'success');
     } catch (err) {
       showToast('Import failed: ' + err.message, 'error', 5000);
     }
@@ -92,28 +202,47 @@ function importJSON() {
 }
 
 /* ============================================================
-   ATS MODE + PROGRESS
+   REFRESH MODELS FROM PROVIDER
    ============================================================ */
-function setAtsMode(mode) {
-  currentAtsMode = mode;
-  document.querySelectorAll('.ats-mode-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
-  saveSettings();
-}
+async function refreshModelsFromProvider() {
+  const providerId = document.getElementById('providerSelect').value;
+  const provider = getProvider(providerId);
+  if (!provider.modelsPath) {
+    return showToast('This provider does not expose a model list.', 'warn');
+  }
 
-function showProgress(text, pct) {
-  const wrap = document.getElementById('atsProgress');
-  const fill = document.getElementById('atsProgressFill');
-  const txt  = document.getElementById('atsProgressText');
-  if (!wrap || !fill || !txt) return;
-  wrap.classList.remove('hidden');
-  fill.style.width = `${pct}%`;
-  txt.textContent = text;
-}
+  const key = getProviderKey(providerId);
+  if (provider.needsKey && !key) {
+    return showToast('Enter your API key first.', 'warn');
+  }
 
-function hideProgress() {
-  document.getElementById('atsProgress')?.classList.add('hidden');
+  const btn = document.getElementById('refreshModelsBtn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Fetching…';
+
+  try {
+    const headers = key ? { 'Authorization': `Bearer ${key}` } : {};
+    const res = await fetch(`${provider.baseUrl}${provider.modelsPath}`, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const ids = (data.data || data.models || [])
+      .map(m => m.id || m.name)
+      .filter(Boolean);
+
+    if (!ids.length) throw new Error('No models returned.');
+
+    const datalist = document.getElementById('modelSuggestions');
+    datalist.innerHTML = ids.map(id => `<option value="${id}"></option>`).join('');
+
+    showToast(`Loaded ${ids.length} models from ${provider.name}. Start typing in the model field to see them.`, 'success', 4000);
+  } catch (e) {
+    showToast('Could not fetch models: ' + e.message, 'error', 5000);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 }
 
 /* ============================================================
@@ -132,13 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initUI();
   initAIModal();
   initStepper();
+  initChat();
 
   const jdField = document.getElementById('jobDescription');
   if (jdField) {
     jdField.value = resume.jobDescription || '';
-    jdField.addEventListener('input', () => {
-      resume.jobDescription = jdField.value;
-    });
+    jdField.addEventListener('input', () => { resume.jobDescription = jdField.value; });
   }
 
   document.getElementById('themeToggle')?.addEventListener('click', () => {
@@ -146,12 +274,15 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`${next === 'dark' ? 'Dark' : 'Light'} mode`, 'info', 1800);
   });
 
-  // ATS mode toggle
+  /* ---- ATS mode toggle ---- */
   document.querySelectorAll('.ats-mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => setAtsMode(btn.dataset.mode));
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      setAtsMode(btn.dataset.mode);
+    });
   });
 
-  // ATS scan
+  /* ---- ATS scan ---- */
   document.getElementById('atsScanBtn')?.addEventListener('click', async e => {
     const jd = jdField?.value || '';
     if (!jd.trim()) return showToast('Paste a job description first.', 'warn');
@@ -162,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentAtsMode === 'fast') {
       const result = analyzeResume(jd, resume);
       renderATSResults(result);
-      showToast(`Fast scan complete — ${result.score}% match`, 'info', 2400);
+      showToast(`Fast scan - ${result.score}% match`, 'info', 2400);
       return;
     }
 
@@ -172,9 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showProgress('Preparing embeddings…', 0);
 
     try {
-      const url        = document.getElementById('ollamaUrl').value;
+      const url = document.getElementById('ollamaUrl').value;
       const embedModel = document.getElementById('embedModel').value || 'nomic-embed-text';
-
       const result = await semanticScan(jd, resume, {
         url,
         embedModel,
@@ -182,19 +312,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const label = phase === 'keywords'
             ? `Embedding keyword ${Math.min(done + 1, total)} of ${total}…`
             : `Embedding resume section ${Math.min(done + 1, total)} of ${total}…`;
-          const pct = total ? Math.round((done / total) * 100) : 0;
-          showProgress(label, pct);
+          showProgress(label, total ? Math.round((done / total) * 100) : 0);
         }
       });
-
       renderATSResults(result);
-      showToast(`Semantic scan complete — ${result.score}% match`, 'success', 2600);
+      showToast(`Semantic scan - ${result.score}% match`, 'success', 2600);
     } catch (err) {
-      if (err.code === 'MODEL_NOT_FOUND') {
-        showToast(err.message, 'error', 6000);
-      } else {
-        showToast('Semantic scan failed: ' + err.message, 'error', 5000);
-      }
+      showToast(err.code === 'MODEL_NOT_FOUND' ? err.message : 'Semantic scan failed: ' + err.message, 'error', 5000);
     } finally {
       hideProgress();
       btn.disabled = false;
@@ -202,12 +326,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // AI Deep Analysis
-  document.getElementById('atsAiBtn')?.addEventListener('click', e => {
-    aiDeepAnalysis(e.currentTarget);
+  /* ---- AI Deep Analysis ---- */
+  document.getElementById('atsAiBtn')?.addEventListener('click', e => aiDeepAnalysis(e.currentTarget));
+
+  /* ---- Chat ---- */
+  document.getElementById('chatForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const text = input.value;
+    if (!text.trim()) return;
+    input.value = '';
+    await chatSend(text);
+  });
+  document.getElementById('chatInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('chatForm')?.requestSubmit();
+    }
+  });
+  document.getElementById('chatClearBtn')?.addEventListener('click', () => {
+    chatClear();
+    showToast('Chat cleared', 'info');
+  });
+  document.getElementById('chatMessages')?.addEventListener('click', e => {
+    const sug = e.target.closest('.chat-suggestion');
+    if (!sug) return;
+    document.getElementById('chatInput').value = sug.dataset.suggest || '';
+    document.getElementById('chatInput').focus();
   });
 
-  // Gallery
+  /* ---- Gallery ---- */
   renderTemplateGallery();
   initTemplateModal();
   applyTemplate(resume.template || 'modern');
@@ -225,9 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modal && !modal.classList.contains('hidden')) {
       const frame = document.querySelector('.template-preview-frame');
       const inner = document.getElementById('templateModalPreview');
-      if (frame && inner) {
-        inner.style.transform = `scale(${frame.clientWidth / 816})`;
-      }
+      if (frame && inner) inner.style.transform = `scale(${frame.clientWidth / 816})`;
     }
   });
 
@@ -235,20 +381,28 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTemplate(resume.template || 'modern');
     switchView('editor');
   });
+  document.getElementById('brandHome')?.addEventListener('click', () => switchView('gallery'));
 
-  document.getElementById('brandHome')?.addEventListener('click', () => {
-    switchView('gallery');
-  });
-
-  // Settings
+  /* ---- Settings ---- */
   loadSettings();
   setAtsMode(currentAtsMode);
+
+  document.getElementById('providerSelect')?.addEventListener('change', e => {
+    const provider = getProvider(e.target.value);
+    applyProviderUI(provider);
+    saveSettings();
+    showToast(`Provider: ${provider.name}`, 'info', 1800);
+  });
+
   document.getElementById('ollamaUrl')?.addEventListener('input', saveSettings);
   document.getElementById('ollamaModel')?.addEventListener('input', saveSettings);
   document.getElementById('embedModel')?.addEventListener('input', () => {
     saveSettings();
     clearEmbeddingCache();
   });
+  document.getElementById('apiKey')?.addEventListener('input', saveSettings);
+
+  document.getElementById('refreshModelsBtn')?.addEventListener('click', refreshModelsFromProvider);
 
   document.getElementById('exportJsonBtn')?.addEventListener('click', exportJSON);
   document.getElementById('importJsonBtn')?.addEventListener('click', importJSON);
@@ -258,9 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.stopPropagation();
     settingsPanel?.classList.toggle('hidden');
   });
-  document.getElementById('settingsClose')?.addEventListener('click', () => {
-    settingsPanel?.classList.add('hidden');
-  });
+  document.getElementById('settingsClose')?.addEventListener('click', () => settingsPanel?.classList.add('hidden'));
   document.addEventListener('click', e => {
     if (!settingsPanel || settingsPanel.classList.contains('hidden')) return;
     if (!settingsPanel.contains(e.target) && !e.target.closest('#settingsBtn')) {
@@ -268,11 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Preview toggle
+  /* ---- Preview toggle ---- */
   document.getElementById('previewToggle')?.addEventListener('click', togglePreview);
   document.getElementById('previewClose')?.addEventListener('click', closePreview);
 
-  // Header actions
+  /* ---- Header actions ---- */
   document.getElementById('exportBtn')?.addEventListener('click', () => window.print());
   document.getElementById('exportBtn2')?.addEventListener('click', () => window.print());
   document.getElementById('saveBtn')?.addEventListener('click', () => {
@@ -282,13 +434,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('clearBtn')?.addEventListener('click', async () => {
     const ok = await confirmDialog({
       title: 'Clear all data?',
-      message: 'This will permanently delete your resume, template choice, and job description. This cannot be undone.',
+      message: 'This will permanently delete your resume, template choice, job description, and chat history. This cannot be undone.',
       confirmLabel: 'Clear everything',
       danger: true
     });
     if (!ok) return;
     clearResumeStorage();
     clearEmbeddingCache();
+    chatClear();
     populateInputs();
     renderAll();
     renderSectionOrder();
@@ -299,15 +452,15 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('All data cleared', 'info');
   });
 
-  // Add buttons
+  /* ---- Add buttons ---- */
   document.getElementById('addExperienceBtn')?.addEventListener('click', addExperience);
   document.getElementById('addEducationBtn')?.addEventListener('click', addEducation);
   document.getElementById('addProjectBtn')?.addEventListener('click', addProject);
 
-  // AI summary
+  /* ---- AI summary ---- */
   document.getElementById('aiSummaryBtn')?.addEventListener('click', e => aiGenerateSummary(e.currentTarget));
 
-  // AI improve bullets
+  /* ---- AI improve bullets (delegated) ---- */
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="ai-improve"]');
     if (btn) aiImproveBullets(Number(btn.dataset.index), btn);

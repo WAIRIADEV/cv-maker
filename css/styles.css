@@ -179,7 +179,9 @@ input, textarea, select { font-family: inherit; }
   position: absolute;
   top: calc(var(--header-h) - 6px);
   right: 20px;
-  width: 320px;
+  width: 340px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -202,7 +204,8 @@ input, textarea, select { font-family: inherit; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.settings-field input {
+.settings-field input,
+.settings-field select {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -212,7 +215,9 @@ input, textarea, select { font-family: inherit; }
   color: var(--text);
   transition: border-color var(--transition), box-shadow var(--transition);
 }
-.settings-field input:focus {
+.settings-field select { cursor: pointer; }
+.settings-field input:focus,
+.settings-field select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
@@ -312,7 +317,7 @@ input, textarea, select { font-family: inherit; }
 .mobile-progress { display: none; text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; font-weight: 500; }
 
 /* ============================================================
-   MAIN LAYOUT — 3 columns: editor | resizer | preview
+   MAIN LAYOUT - 3 columns: editor | resizer | preview
    ============================================================ */
 .app-main {
   display: grid;
@@ -357,8 +362,6 @@ input, textarea, select { font-family: inherit; }
   opacity: 1;
   background: var(--primary);
 }
-
-/* While dragging, lock the cursor globally */
 body.resizing,
 body.resizing * {
   cursor: col-resize !important;
@@ -366,7 +369,7 @@ body.resizing * {
 }
 
 /* ============================================================
-   EDITOR — flows with the page
+   EDITOR - flows with the page
    ============================================================ */
 .editor {
   padding: 32px 40px 80px;
@@ -574,7 +577,7 @@ body.resizing * {
 .export-cta p { margin: 0 0 16px; color: var(--text-muted); font-size: 13px; line-height: 1.5; }
 
 /* ============================================================
-   PAGE FOOTER NAV — normal flow
+   PAGE FOOTER NAV
    ============================================================ */
 .page-footer {
   margin-top: 40px;
@@ -594,7 +597,7 @@ body.resizing * {
 .step-counter { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
 /* ============================================================
-   PREVIEW PANEL — sticky, own scroll
+   PREVIEW PANEL
    ============================================================ */
 .preview-panel {
   position: sticky;
@@ -808,6 +811,10 @@ body.resizing * {
 }
 .ats-mode-btn.active svg { color: var(--primary); }
 .ats-mode-btn.active span { color: var(--primary); }
+.ats-mode-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .ats-actions {
   display: grid;
@@ -1046,6 +1053,161 @@ body.resizing * {
 }
 
 /* ============================================================
+   CHAT PANEL
+   ============================================================ */
+.chat-panel {
+  margin-top: 28px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.chat-header h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.chat-header p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  scroll-behavior: smooth;
+}
+.chat-messages::-webkit-scrollbar { width: 8px; }
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.chat-empty {
+  text-align: center;
+  padding: 24px 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 14px;
+}
+.chat-suggestion {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.chat-suggestion:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 92%;
+}
+.chat-msg-user {
+  align-self: flex-end;
+  background: var(--primary);
+  color: white;
+  border-bottom-right-radius: 3px;
+}
+.chat-msg-assistant {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 3px;
+}
+.chat-msg-role {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+.chat-msg-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.chat-typing {
+  display: inline-block;
+  animation: chat-blink 1s steps(2) infinite;
+  color: var(--text-soft);
+}
+@keyframes chat-blink {
+  50% { opacity: 0; }
+}
+
+.chat-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+.chat-input-row .textarea {
+  resize: none;
+  min-height: 44px;
+}
+.chat-input-row .btn {
+  height: 44px;
+  padding: 0 16px;
+}
+
+@media (max-width: 520px) {
+  .chat-input-row { grid-template-columns: 1fr; }
+  .chat-input-row .btn { width: 100%; }
+  .chat-messages { max-height: 340px; }
+}
+
+/* ============================================================
+   SETTINGS ACTIONS
+   ============================================================ */
+.settings-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================================
    DARK MODE
    ============================================================ */
 :root { color-scheme: light; }
@@ -1109,6 +1271,9 @@ body.resizing * {
   border-color: rgba(139, 92, 246, 0.3);
 }
 
+[data-theme="dark"] .chat-msg-user { background: var(--primary); }
+[data-theme="dark"] .chat-msg-assistant { background: var(--surface); }
+
 /* ============================================================
    TOASTS
    ============================================================ */
@@ -1171,18 +1336,6 @@ body.resizing * {
 @media (max-width: 520px) {
   .toast-container { left: 16px; right: 16px; bottom: 16px; }
   .toast { max-width: none; }
-}
-
-/* ============================================================
-   SETTINGS ACTIONS
-   ============================================================ */
-.settings-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
 }
 
 /* ============================================================
