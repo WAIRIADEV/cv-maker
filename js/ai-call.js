@@ -162,14 +162,23 @@ async function callOpenAICompatible({ provider, apiKey, prompt, messages, stream
     { role: 'user', content: prompt }
   ];
 
+    // Reasoning models (Groq gpt-oss, DeepSeek reasoner) burn tokens on
+  // hidden chain-of-thought before producing visible content. Keep it minimal.
+  const isReasoning = /gpt-oss|o1|o3|deepseek-reasoner|qwq/i.test(model);
+
   const body = {
     model,
     messages: chatMessages,
     stream,
-    max_completion_tokens: maxTokens,
-    temperature,
+    max_completion_tokens: isReasoning ? maxTokens * 3 : maxTokens,
+    temperature: isReasoning ? 1 : temperature,  // Groq requires temp=1 for gpt-oss
     top_p: 0.9
   };
+
+  // Ask Groq to keep reasoning short (supported on gpt-oss models)
+  if (/gpt-oss/i.test(model)) {
+    body.reasoning_effort = 'low';
+  }
 
   const res = await fetch(`${provider.baseUrl}${provider.chatPath}`, {
     method: 'POST',
@@ -216,7 +225,10 @@ async function parseOpenAIStream(res, onToken) {
       if (payload === '[DONE]') continue;
       try {
         const obj = JSON.parse(payload);
-        const token = obj.choices?.[0]?.delta?.content;
+                const delta = obj.choices?.[0]?.delta;
+        // Some providers (Groq gpt-oss) emit hidden reasoning frames first.
+        // We deliberately ignore those — they aren't the answer.
+        const token = delta?.content;
         if (token) {
           full += token;
           onToken?.(token, full);
