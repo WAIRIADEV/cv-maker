@@ -4,13 +4,8 @@ import { sanitizeAIOutput } from './utils.js';
 import { showToast } from './toast.js';
 import { callAI } from './ai-call.js';
 import {
-  loadChat,
-  saveChat,
-  clearChat,
-  getMessages,
-  addUserMessage,
-  addAssistantMessage,
-  updateLastAssistant,
+  loadChat, saveChat, clearChat, getMessages,
+  addUserMessage, addAssistantMessage, updateLastAssistant,
   buildRequestMessages
 } from './chat.js';
 
@@ -45,7 +40,7 @@ function compactResume(r) {
 }
 
 /* ============================================================
-   SUMMARY — streams live into review modal
+   SUMMARY - streams into review modal
    ============================================================ */
 export async function aiGenerateSummary(btn) {
   const original = btn.textContent;
@@ -126,7 +121,7 @@ ${current}`;
 }
 
 /* ============================================================
-   DEEP ANALYSIS — streams into #aiOutput
+   DEEP ANALYSIS
    ============================================================ */
 export async function aiDeepAnalysis(btn) {
   const jd = document.getElementById('jobDescription')?.value || '';
@@ -146,9 +141,9 @@ The candidate's resume and the target job description are below.
 
 Give specific, actionable advice in this exact structure (plain text, no markdown, no asterisks):
 
-1. Top 3 keyword gaps — words or phrases in the job description that are missing or underrepresented in the resume.
-2. Three specific bullet rewrites — pick existing resume bullets and rewrite them to include the job's vocabulary while keeping them truthful.
-3. One strategic note — a single sentence about positioning, seniority, or narrative.
+1. Top 3 keyword gaps - words or phrases in the job description that are missing or underrepresented in the resume.
+2. Three specific bullet rewrites - pick existing resume bullets and rewrite them to include the job's vocabulary while keeping them truthful.
+3. One strategic note - a single sentence about positioning, seniority, or narrative.
 
 Keep it under 220 words total. Do not use markdown formatting.
 
@@ -174,7 +169,7 @@ ${jd}`;
 }
 
 /* ============================================================
-   CHAT — active context window
+   CHAT - active context window
    ============================================================ */
 let chatSending = false;
 
@@ -187,7 +182,6 @@ export async function chatSend(text) {
   addUserMessage(trimmed);
   renderChatMessages();
 
-  // Add a placeholder assistant message that will stream into
   addAssistantMessage('');
   const assistantIndex = getMessages().length - 1;
 
@@ -204,7 +198,6 @@ export async function chatSend(text) {
       }
     });
 
-    // Final sanitize
     const final = sanitizeAIOutput(getMessages()[assistantIndex].content);
     updateLastAssistant(final);
     renderChatMessages();
@@ -257,7 +250,6 @@ export function renderChatMessages() {
     </div>
   `).join('');
 
-  // Auto-scroll to bottom
   container.scrollTop = container.scrollHeight;
 }
 
@@ -266,3 +258,8 @@ function escapeHtml(text) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[m]));
 }
+
+/* Re-exports for main.js convenience */
+export { generateCoverLetter } from './cover.js';
+export { generateInterviewPrep, sendInterviewToChat } from './interview.js';
+export { matchInternshipRequirements, sendInternshipToChat } from './internship.js';

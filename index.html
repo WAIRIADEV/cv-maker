@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI CV Maker</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f46e5'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='Inter,sans-serif' font-size='13' font-weight='800' fill='white' text-anchor='middle'%3ECV%3C/text%3E%3C/svg%3E" />
+  <title>CVForge</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Lora:wght@400;600&display=swap" rel="stylesheet" />
@@ -18,7 +20,7 @@
     <div class="app-header-inner">
       <button id="brandHome" class="brand" title="Back to templates" type="button">
         <div class="brand-mark">CV</div>
-        <span class="brand-name">AI CV Maker</span>
+        <span class="brand-name">CVForge</span>
       </button>
 
       <div class="header-actions">
@@ -102,7 +104,7 @@
     </div>
   </header>
 
-  <!-- GALLERY VIEW -->
+  <!-- GALLERY -->
   <div id="galleryView" class="gallery-view">
     <div class="gallery-inner">
       <div class="gallery-header">
@@ -120,7 +122,7 @@
     </div>
   </div>
 
-  <!-- EDITOR SHELL -->
+  <!-- EDITOR -->
   <div id="appShell">
     <nav class="stepper no-print" aria-label="Progress">
       <ol>
@@ -130,9 +132,10 @@
         <li data-step="4"><span class="step-num">4</span><span class="step-label">Education</span></li>
         <li data-step="5"><span class="step-num">5</span><span class="step-label">Projects</span></li>
         <li data-step="6"><span class="step-num">6</span><span class="step-label">Skills</span></li>
-        <li data-step="7"><span class="step-num">7</span><span class="step-label">Export</span></li>
+        <li data-step="7"><span class="step-num">7</span><span class="step-label">Tailor</span></li>
+        <li data-step="8"><span class="step-num">8</span><span class="step-label">Cover</span></li>
       </ol>
-      <div class="mobile-progress" aria-hidden="true">Step 1 of 7</div>
+      <div class="mobile-progress" aria-hidden="true">Step 1 of 8</div>
     </nav>
 
     <main class="app-main">
@@ -225,8 +228,8 @@
         <!-- Page 7 -->
         <div class="page" data-page="7">
           <header class="page-header">
-            <h2>Tailor & Export</h2>
-            <p>Scan your resume against a job description, then chat with AI about the results.</p>
+            <h2>Tailor &amp; Analyze</h2>
+            <p>Scan your resume against a job description, then use AI to refine.</p>
           </header>
 
           <label class="field">
@@ -266,6 +269,44 @@
           <section id="atsResults" class="ats-results hidden"></section>
           <section id="aiOutput" class="ai-output hidden"></section>
 
+          <!-- Interview Prep -->
+          <section class="feature-panel" id="interviewPanel">
+            <div class="feature-header">
+              <div>
+                <h3>Interview Prep</h3>
+                <p>Likely questions based on this job and your resume gaps.</p>
+              </div>
+              <button id="interviewBtn" class="btn btn-ai btn-sm" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Generate Questions
+              </button>
+            </div>
+            <div id="interviewOutput" class="ai-output hidden"></div>
+            <div id="interviewActions" class="feature-actions hidden" style="margin-top:10px">
+              <button id="interviewToChatBtn" class="btn btn-secondary btn-sm" type="button">Practice in chat →</button>
+            </div>
+          </section>
+
+          <!-- Internship Matcher -->
+          <section class="feature-panel" id="internshipPanel">
+            <div class="feature-header">
+              <div>
+                <h3>Internship Matcher</h3>
+                <p>Paste short-form requirements (one per line). AI matches them against your resume.</p>
+              </div>
+            </div>
+            <textarea id="internshipInput" rows="5" class="textarea" placeholder="Python experience&#10;Familiar with REST APIs&#10;Team collaboration&#10;Git and GitHub"></textarea>
+            <div class="feature-actions" style="margin-top:10px">
+              <button id="internshipBtn" class="btn btn-ai btn-sm" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Match Requirements
+              </button>
+              <button id="internshipToChatBtn" class="btn btn-secondary btn-sm hidden" type="button">Ask in chat →</button>
+            </div>
+            <div id="internshipOutput" class="ai-output hidden" style="margin-top:12px"></div>
+          </section>
+
+          <!-- Chat -->
           <section class="chat-panel" id="chatPanel">
             <div class="chat-header">
               <div>
@@ -291,13 +332,49 @@
             </div>
             <div class="section-order-list" id="sectionOrderList"></div>
           </section>
+        </div>
+
+        <!-- Page 8: Cover Letter -->
+        <div class="page" data-page="8">
+          <header class="page-header">
+            <h2>Cover Letter</h2>
+            <p>Generated from your resume and the job description on step 7. Edit anytime.</p>
+          </header>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>Company name <em style="font-weight:400; color:var(--text-soft)">(optional)</em></span>
+              <input id="coverCompany" placeholder="e.g. Stripe" />
+            </label>
+            <label class="field">
+              <span>Tone</span>
+              <select id="coverTone">
+                <option value="professional">Professional (default)</option>
+                <option value="warm">Warm &amp; personable</option>
+                <option value="bold">Confident &amp; direct</option>
+                <option value="formal">Formal &amp; traditional</option>
+              </select>
+            </label>
+          </div>
+
+          <button id="coverGenerateBtn" class="btn btn-ai btn-block" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Generate Cover Letter
+          </button>
+
+          <textarea id="coverOutput" rows="20" class="textarea cover-textarea" placeholder="Your cover letter will stream in here…"></textarea>
+
+          <div class="feature-actions" style="margin-top:10px">
+            <button id="coverCopyBtn" class="btn btn-secondary btn-sm" type="button">Copy to clipboard</button>
+            <button id="coverClearBtn" class="btn btn-secondary btn-sm" type="button">Clear</button>
+          </div>
 
           <div class="export-cta">
             <h3>Ready to send it?</h3>
-            <p>Your resume is formatted for ATS-friendly printing. Choose "Save as PDF" in the print dialog.</p>
+            <p>Print your resume as PDF, then paste the cover letter into the application portal or a new document.</p>
             <button id="exportBtn2" class="btn btn-primary btn-lg btn-block" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export as PDF
+              Export Resume as PDF
             </button>
           </div>
         </div>
@@ -307,7 +384,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
             Back
           </button>
-          <div class="step-counter">Step 1 of 7</div>
+          <div class="step-counter">Step 1 of 8</div>
           <button id="nextBtn" class="btn btn-primary" type="button">
             Next
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -327,7 +404,7 @@
     </main>
   </div>
 
-  <!-- MODALS -->
+  <!-- Modals -->
   <div id="templateModal" class="modal hidden">
     <div class="template-modal-card">
       <button id="templateModalClose" class="template-modal-close" aria-label="Close" type="button">×</button>

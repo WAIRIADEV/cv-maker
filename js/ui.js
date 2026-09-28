@@ -368,7 +368,7 @@ export function initTemplateModal() {
 /* ============================================================
    STEP NAVIGATION
    ============================================================ */
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 let currentStep = 1;
 
 export function goToStep(n) {
